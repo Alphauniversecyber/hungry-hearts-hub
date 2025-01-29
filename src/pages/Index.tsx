@@ -17,7 +17,7 @@ const Index = () => {
           </p>
           <div className="space-x-4">
             <Button
-              onClick={() => navigate("/donate")}
+              onClick={() => navigate("/register")}
               className="bg-primary hover:bg-primary/90"
             >
               Donate Food
