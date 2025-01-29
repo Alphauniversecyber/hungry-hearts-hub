@@ -9,11 +9,14 @@ import { useToast } from "@/components/ui/use-toast";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast({
@@ -21,12 +24,28 @@ const Login = () => {
         description: "Welcome back!",
       });
       navigate("/admin");
-    } catch (error) {
+    } catch (error: any) {
+      let errorMessage = "Please check your credentials and try again.";
+      
+      // Handle specific Firebase auth errors
+      if (error.code === "auth/invalid-email") {
+        errorMessage = "Please enter a valid email address.";
+      } else if (error.code === "auth/invalid-login-credentials") {
+        errorMessage = "Invalid email or password. Please try again.";
+      } else if (error.code === "auth/user-not-found") {
+        errorMessage = "No account found with this email.";
+      } else if (error.code === "auth/wrong-password") {
+        errorMessage = "Incorrect password. Please try again.";
+      }
+      
       toast({
         title: "Login failed",
-        description: "Please check your credentials and try again.",
+        description: errorMessage,
         variant: "destructive",
       });
+      console.error("Login error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -44,6 +63,8 @@ const Login = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={isLoading}
+              className="w-full"
             />
           </div>
           <div>
@@ -53,10 +74,16 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={isLoading}
+              className="w-full"
             />
           </div>
-          <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-            Login
+          <Button 
+            type="submit" 
+            className="w-full bg-primary hover:bg-primary/90"
+            disabled={isLoading}
+          >
+            {isLoading ? "Logging in..." : "Login"}
           </Button>
         </form>
       </div>
