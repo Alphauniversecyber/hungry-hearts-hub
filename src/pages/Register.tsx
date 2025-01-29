@@ -19,28 +19,35 @@ const Register = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
+      // Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Store additional user data in Firestore
-      await setDoc(doc(db, "users", userCredential.user.uid), {
+      const uid = userCredential.user.uid;
+
+      // Store user data in Firestore (only storing serializable data)
+      const userData = {
         name,
         email,
         phone,
         role: "donor",
-        createdAt: new Date().toISOString()
-      });
+        createdAt: new Date().toISOString(),
+        uid
+      };
+
+      await setDoc(doc(db, "users", uid), userData);
 
       toast({
         title: "Registration successful",
         description: "Welcome to the Food Management System!",
       });
+      
+      // Navigate after all operations are complete
       navigate("/donate");
     } catch (error: any) {
       toast({
         title: "Registration failed",
-        description: error.message,
+        description: error.message || "An error occurred during registration",
         variant: "destructive",
       });
     } finally {
