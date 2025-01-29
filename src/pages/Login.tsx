@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -12,6 +12,32 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Temporary function to create admin users
+  const createAdminUser = async (email: string, password: string) => {
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      toast({
+        title: "Admin user created",
+        description: `Created user with email: ${email}`,
+      });
+    } catch (error: any) {
+      console.error("Error creating admin:", error);
+      toast({
+        title: "Failed to create admin",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Uncomment and run once to create admin users, then comment out again
+  /*
+  useEffect(() => {
+    createAdminUser("ranula5000@gmail.com", "ranula12345@#");
+    createAdminUser("puhulwella@gmail.com", "puhulwella152@");
+  }, []);
+  */
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
