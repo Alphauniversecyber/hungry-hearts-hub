@@ -6,6 +6,7 @@ import { auth, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import MainNav from "@/components/MainNav";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -21,11 +22,9 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      // Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
 
-      // Store user data in Firestore (only storing serializable data)
       const userData = {
         name,
         email,
@@ -42,7 +41,6 @@ const Register = () => {
         description: "Welcome to the Food Management System!",
       });
       
-      // Navigate after all operations are complete
       navigate("/donate");
     } catch (error: any) {
       toast({
@@ -56,66 +54,69 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-teal-50 to-white">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 className="text-3xl font-heading font-bold text-gray-900 mb-6 text-center">
-          Register as Donor
-        </h2>
-        <form onSubmit={handleRegister} className="space-y-4">
-          <div>
-            <Input
-              type="text"
-              placeholder="Full Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
+    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
+      <MainNav />
+      <div className="flex items-center justify-center p-8">
+        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+          <h2 className="text-3xl font-heading font-bold text-gray-900 mb-6 text-center">
+            Register as Donor
+          </h2>
+          <form onSubmit={handleRegister} className="space-y-4">
+            <div>
+              <Input
+                type="text"
+                placeholder="Full Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <Input
+                type="tel"
+                placeholder="Phone Number"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+            <Button 
+              type="submit" 
+              className="w-full bg-primary hover:bg-primary/90"
               disabled={isLoading}
-            />
-          </div>
-          <div>
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={isLoading}
-            />
-          </div>
-          <div>
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isLoading}
-            />
-          </div>
-          <div>
-            <Input
-              type="tel"
-              placeholder="Phone Number"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-              disabled={isLoading}
-            />
-          </div>
-          <Button 
-            type="submit" 
-            className="w-full bg-primary hover:bg-primary/90"
-            disabled={isLoading}
-          >
-            {isLoading ? "Registering..." : "Register"}
-          </Button>
-          <p className="text-center text-sm text-gray-600">
-            Already have an account?{" "}
-            <a href="/login" className="text-primary hover:underline">
-              Login
-            </a>
-          </p>
-        </form>
+            >
+              {isLoading ? "Registering..." : "Register"}
+            </Button>
+            <p className="text-center text-sm text-gray-600">
+              Already have an account?{" "}
+              <a href="/login" className="text-primary hover:underline">
+                Login
+              </a>
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   );
