@@ -2,24 +2,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-
-// Hardcoded admin credentials (will be replaced with school accounts)
-const ADMIN_CREDENTIALS = [
-  {
-    email: "ranula5000@gmail.com",
-    username: "ranula",
-    password: "ranula12345@#"
-  },
-  {
-    email: "puhulwella@gmail.com",
-    username: "puhulwella",
-    password: "puhulwella152@"
-  }
-];
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -32,23 +19,18 @@ const AdminLogin = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Check if credentials match any admin user
-    const isAdmin = ADMIN_CREDENTIALS.some(
-      admin => admin.email === email && admin.password === password
-    );
-
-    if (!isAdmin) {
-      toast({
-        title: "Access denied",
-        description: "Invalid school credentials",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Check if this user is associated with a school
+      const schoolsRef = collection(db, "schools");
+      const q = query(schoolsRef, where("adminId", "==", userCredential.user.uid));
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        throw new Error("No school account found for this user");
+      }
+
       toast({
         title: "Login successful",
         description: "Welcome back to your school dashboard!",
@@ -57,7 +39,7 @@ const AdminLogin = () => {
     } catch (error: any) {
       toast({
         title: "Login failed",
-        description: error.message || "An error occurred during login",
+        description: error.message || "Invalid credentials",
         variant: "destructive",
       });
     } finally {

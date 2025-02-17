@@ -78,6 +78,10 @@ const Donate = () => {
         throw new Error("You must be logged in to donate");
       }
 
+      if (!selectedSchool) {
+        throw new Error("Please select a school");
+      }
+
       await addDoc(collection(db, "donations"), {
         userId: user.uid,
         foodItemId: selectedFood,
@@ -128,11 +132,12 @@ const Donate = () => {
                   <option value="">Select a school</option>
                   {schools.map((school) => (
                     <option key={school.id} value={school.id}>
-                      {school.name}
+                      {school.name} - {school.address}
                     </option>
                   ))}
                 </select>
               </div>
+
               <div>
                 <label className="block text-sm font-medium mb-1">Food Item</label>
                 <select
@@ -150,6 +155,7 @@ const Donate = () => {
                   ))}
                 </select>
               </div>
+
               <div>
                 <label className="block text-sm font-medium mb-1">Quantity</label>
                 <Input
@@ -161,6 +167,7 @@ const Donate = () => {
                   disabled={isLoading}
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Additional Notes
@@ -173,6 +180,7 @@ const Donate = () => {
                   disabled={isLoading}
                 />
               </div>
+
               <Button 
                 type="submit" 
                 className="w-full"
