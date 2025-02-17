@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { collection, addDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
@@ -9,37 +10,45 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import MainNav from "@/components/MainNav";
 import { Label } from "@/components/ui/label";
+import GoogleMapReact from 'google-map-react';
 
 const SchoolRegister = () => {
   const [schoolName, setSchoolName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [address, setAddress] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
+  const [latitude, setLatitude] = useState(6.927079); // Default to Sri Lanka
+  const [longitude, setLongitude] = useState(79.861244);
   const [schoolImage, setSchoolImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleMapClick = ({ lat, lng }: { lat: number; lng: number }) => {
+    setLatitude(lat);
+    setLongitude(lng);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const user = auth.currentUser;
-      if (!user) {
-        throw new Error("You must be logged in to register a school");
-      }
+      // Create user account with email and password
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
       // For now, we'll just store the image as a URL
       // In a real app, you would upload this to Firebase Storage
       const schoolData = {
         name: schoolName,
+        email,
         address,
         phoneNumber,
         location: {
-          latitude: parseFloat(latitude),
-          longitude: parseFloat(longitude)
+          latitude,
+          longitude
         },
         adminId: user.uid,
         createdAt: new Date().toISOString()
@@ -49,10 +58,10 @@ const SchoolRegister = () => {
 
       toast({
         title: "School registered successfully",
-        description: "You can now manage your school from the admin dashboard.",
+        description: "You can now login with your school account.",
       });
 
-      navigate("/admin");
+      navigate("/admin-login");
     } catch (error: any) {
       toast({
         title: "Error registering school",
@@ -83,6 +92,32 @@ const SchoolRegister = () => {
                   disabled={isLoading}
                 />
               </div>
+
+              <div>
+                <Label htmlFor="email">School Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter school email"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Create a password"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
               
               <div>
                 <Label htmlFor="address">Address</Label>
@@ -109,31 +144,39 @@ const SchoolRegister = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="latitude">Latitude</Label>
+              <div>
+                <Label>Location (Click on map to select)</Label>
+                <div className="h-[400px] w-full rounded-lg overflow-hidden mb-4">
+                  <GoogleMapReact
+                    bootstrapURLKeys={{ key: 'YOUR_GOOGLE_MAPS_API_KEY' }}
+                    defaultCenter={{
+                      lat: 6.927079,
+                      lng: 79.861244
+                    }}
+                    defaultZoom={8}
+                    onClick={handleMapClick}
+                  >
+                    <Marker lat={latitude} lng={longitude} />
+                  </GoogleMapReact>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <Input
-                    id="latitude"
                     type="number"
                     step="any"
                     value={latitude}
-                    onChange={(e) => setLatitude(e.target.value)}
-                    placeholder="School latitude"
+                    onChange={(e) => setLatitude(Number(e.target.value))}
+                    placeholder="Latitude"
                     required
-                    disabled={isLoading}
+                    disabled
                   />
-                </div>
-                <div>
-                  <Label htmlFor="longitude">Longitude</Label>
                   <Input
-                    id="longitude"
                     type="number"
                     step="any"
                     value={longitude}
-                    onChange={(e) => setLongitude(e.target.value)}
-                    placeholder="School longitude"
+                    onChange={(e) => setLongitude(Number(e.target.value))}
+                    placeholder="Longitude"
                     required
-                    disabled={isLoading}
+                    disabled
                   />
                 </div>
               </div>
@@ -164,4 +207,9 @@ const SchoolRegister = () => {
   );
 };
 
+const Marker = () => (
+  <div className="w-4 h-4 bg-red-500 rounded-full -translate-x-2 -translate-y-2" />
+);
+
 export default SchoolRegister;
+

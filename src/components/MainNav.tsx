@@ -59,7 +59,7 @@ const MainNav = () => {
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                   <Link to="/admin-login" className="text-gray-600 hover:text-primary">
-                    Admin Login
+                    School Login
                   </Link>
                 </NavigationMenuItem>
                 <NavigationMenuItem>

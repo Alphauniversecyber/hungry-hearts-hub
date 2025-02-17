@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 
-// Hardcoded admin credentials
+// Hardcoded admin credentials (will be replaced with school accounts)
 const ADMIN_CREDENTIALS = [
   {
     email: "ranula5000@gmail.com",
@@ -39,7 +40,7 @@ const AdminLogin = () => {
     if (!isAdmin) {
       toast({
         title: "Access denied",
-        description: "Invalid admin credentials",
+        description: "Invalid school credentials",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -50,7 +51,7 @@ const AdminLogin = () => {
       await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: "Login successful",
-        description: "Welcome back, admin!",
+        description: "Welcome back to your school dashboard!",
       });
       navigate("/admin");
     } catch (error: any) {
@@ -68,13 +69,13 @@ const AdminLogin = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-teal-50 to-white">
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-3xl font-heading font-bold text-gray-900 mb-6 text-center">
-          Admin Login
+          School Login
         </h2>
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <Input
               type="email"
-              placeholder="Email"
+              placeholder="School Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -100,6 +101,12 @@ const AdminLogin = () => {
           >
             {isLoading ? "Logging in..." : "Login"}
           </Button>
+          <p className="text-center text-sm text-gray-600 mt-4">
+            Don't have a school account?{" "}
+            <a href="/school-register" className="text-primary hover:underline">
+              Register your school
+            </a>
+          </p>
         </form>
       </div>
     </div>
