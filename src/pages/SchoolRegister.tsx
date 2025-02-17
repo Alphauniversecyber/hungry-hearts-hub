@@ -1,8 +1,8 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { collection, addDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword, AuthErrorCodes } from "firebase/auth";
+import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,11 +24,29 @@ const SchoolRegister = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const checkSchoolExists = async (email: string) => {
+    const schoolsRef = collection(db, "schools");
+    const q = query(schoolsRef, where("email", "==", email));
+    const querySnapshot = await getDocs(q);
+    return !querySnapshot.empty;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      // First check if school already exists
+      const schoolExists = await checkSchoolExists(email);
+      if (schoolExists) {
+        throw new Error("A school with this email already exists");
+      }
+
+      // Validate password
+      if (password.length < 6) {
+        throw new Error("Password must be at least 6 characters long");
+      }
+
       // Create user account with email and password
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -57,9 +75,22 @@ const SchoolRegister = () => {
 
       navigate("/admin-login");
     } catch (error: any) {
+      let errorMessage = "An error occurred during registration";
+      
+      // Handle specific Firebase Auth errors
+      if (error.code === AuthErrorCodes.EMAIL_EXISTS || 
+          error.message === "EMAIL_EXISTS" ||
+          error.message.includes("EMAIL_EXISTS")) {
+        errorMessage = "This email is already registered. Please use a different email or login instead.";
+      } else if (error.code === AuthErrorCodes.WEAK_PASSWORD) {
+        errorMessage = "Password should be at least 6 characters long";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
-        title: "Error registering school",
-        description: error.message,
+        title: "Registration failed",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -107,8 +138,9 @@ const SchoolRegister = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create a password"
+                  placeholder="Create a password (min. 6 characters)"
                   required
+                  minLength={6}
                   disabled={isLoading}
                 />
               </div>
