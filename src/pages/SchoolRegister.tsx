@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import MainNav from "@/components/MainNav";
 import { Label } from "@/components/ui/label";
-import GoogleMapReact from 'google-map-react';
 
 const SchoolRegister = () => {
   const [schoolName, setSchoolName] = useState("");
@@ -18,17 +17,12 @@ const SchoolRegister = () => {
   const [password, setPassword] = useState("");
   const [address, setAddress] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [latitude, setLatitude] = useState(6.927079); // Default to Sri Lanka
-  const [longitude, setLongitude] = useState(79.861244);
+  const [latitude, setLatitude] = useState<string>("");
+  const [longitude, setLongitude] = useState<string>("");
   const [schoolImage, setSchoolImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const handleMapClick = ({ lat, lng }: { lat: number; lng: number }) => {
-    setLatitude(lat);
-    setLongitude(lng);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,8 +41,8 @@ const SchoolRegister = () => {
         address,
         phoneNumber,
         location: {
-          latitude,
-          longitude
+          latitude: parseFloat(latitude),
+          longitude: parseFloat(longitude)
         },
         adminId: user.uid,
         createdAt: new Date().toISOString()
@@ -144,39 +138,31 @@ const SchoolRegister = () => {
                 />
               </div>
 
-              <div>
-                <Label>Location (Click on map to select)</Label>
-                <div className="h-[400px] w-full rounded-lg overflow-hidden mb-4">
-                  <GoogleMapReact
-                    bootstrapURLKeys={{ key: 'YOUR_GOOGLE_MAPS_API_KEY' }}
-                    defaultCenter={{
-                      lat: 6.927079,
-                      lng: 79.861244
-                    }}
-                    defaultZoom={8}
-                    onClick={handleMapClick}
-                  >
-                    <Marker lat={latitude} lng={longitude} />
-                  </GoogleMapReact>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="latitude">Latitude</Label>
                   <Input
+                    id="latitude"
                     type="number"
                     step="any"
                     value={latitude}
-                    onChange={(e) => setLatitude(Number(e.target.value))}
-                    placeholder="Latitude"
+                    onChange={(e) => setLatitude(e.target.value)}
+                    placeholder="Enter latitude"
                     required
-                    disabled
+                    disabled={isLoading}
                   />
+                </div>
+                <div>
+                  <Label htmlFor="longitude">Longitude</Label>
                   <Input
+                    id="longitude"
                     type="number"
                     step="any"
                     value={longitude}
-                    onChange={(e) => setLongitude(Number(e.target.value))}
-                    placeholder="Longitude"
+                    onChange={(e) => setLongitude(e.target.value)}
+                    placeholder="Enter longitude"
                     required
-                    disabled
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -207,9 +193,4 @@ const SchoolRegister = () => {
   );
 };
 
-const Marker = () => (
-  <div className="w-4 h-4 bg-red-500 rounded-full -translate-x-2 -translate-y-2" />
-);
-
 export default SchoolRegister;
-
