@@ -1,3 +1,4 @@
+
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink } from "@/components/ui/navigation-menu";
 import { Link } from "react-router-dom";
 import { auth } from "@/lib/firebase";
@@ -56,17 +57,29 @@ const MainNav = () => {
                     Register
                   </Link>
                 </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <Link to="/admin-login" className="text-gray-600 hover:text-primary">
+                    Admin Login
+                  </Link>
+                </NavigationMenuItem>
               </>
             ) : (
-              <NavigationMenuItem>
-                <Button 
-                  variant="ghost" 
-                  onClick={handleLogout}
-                  className="text-gray-600 hover:text-primary"
-                >
-                  Logout
-                </Button>
-              </NavigationMenuItem>
+              <>
+                <NavigationMenuItem>
+                  <Link to="/admin" className="text-gray-600 hover:text-primary">
+                    Dashboard
+                  </Link>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <Button 
+                    variant="ghost" 
+                    onClick={handleLogout}
+                    className="text-gray-600 hover:text-primary"
+                  >
+                    Logout
+                  </Button>
+                </NavigationMenuItem>
+              </>
             )}
           </NavigationMenuList>
         </NavigationMenu>
