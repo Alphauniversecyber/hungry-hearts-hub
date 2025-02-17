@@ -62,6 +62,11 @@ const MainNav = () => {
                     Admin Login
                   </Link>
                 </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <Link to="/school-register" className="text-gray-600 hover:text-primary">
+                    Register School
+                  </Link>
+                </NavigationMenuItem>
               </>
             ) : (
               <>

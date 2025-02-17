@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, addDoc, getDocs } from "firebase/firestore";
@@ -14,9 +15,17 @@ interface FoodItem {
   description: string;
 }
 
+interface School {
+  id: string;
+  name: string;
+  address: string;
+}
+
 const Donate = () => {
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
+  const [schools, setSchools] = useState<School[]>([]);
   const [selectedFood, setSelectedFood] = useState("");
+  const [selectedSchool, setSelectedSchool] = useState("");
   const [quantity, setQuantity] = useState("");
   const [note, setNote] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -34,20 +43,29 @@ const Donate = () => {
   }, [navigate]);
 
   useEffect(() => {
-    const fetchFoodItems = async () => {
+    const fetchData = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "foodItems"));
-        const items = querySnapshot.docs.map(doc => ({
+        // Fetch food items
+        const foodSnapshot = await getDocs(collection(db, "foodItems"));
+        const items = foodSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as FoodItem[];
         setFoodItems(items);
+
+        // Fetch schools
+        const schoolsSnapshot = await getDocs(collection(db, "schools"));
+        const schoolsList = schoolsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as School[];
+        setSchools(schoolsList);
       } catch (error) {
-        console.error("Error fetching food items:", error);
+        console.error("Error fetching data:", error);
       }
     };
 
-    fetchFoodItems();
+    fetchData();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,6 +81,7 @@ const Donate = () => {
       await addDoc(collection(db, "donations"), {
         userId: user.uid,
         foodItemId: selectedFood,
+        schoolId: selectedSchool,
         quantity,
         note,
         status: "pending",
@@ -75,6 +94,7 @@ const Donate = () => {
       });
 
       setSelectedFood("");
+      setSelectedSchool("");
       setQuantity("");
       setNote("");
     } catch (error: any) {
@@ -96,6 +116,23 @@ const Donate = () => {
           <h1 className="text-3xl font-bold text-center mb-8">Donate Food</h1>
           <div className="bg-white p-6 rounded-lg shadow">
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">School</label>
+                <select
+                  value={selectedSchool}
+                  onChange={(e) => setSelectedSchool(e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2"
+                  required
+                  disabled={isLoading}
+                >
+                  <option value="">Select a school</option>
+                  {schools.map((school) => (
+                    <option key={school.id} value={school.id}>
+                      {school.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Food Item</label>
                 <select
