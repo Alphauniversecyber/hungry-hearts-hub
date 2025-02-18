@@ -17,9 +17,6 @@ const SchoolRegister = () => {
   const [password, setPassword] = useState("");
   const [address, setAddress] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [latitude, setLatitude] = useState<string>("");
-  const [longitude, setLongitude] = useState<string>("");
-  const [schoolImage, setSchoolImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -51,17 +48,11 @@ const SchoolRegister = () => {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // For now, we'll just store the image as a URL
-      // In a real app, you would upload this to Firebase Storage
       const schoolData = {
         name: schoolName,
         email,
         address,
         phoneNumber,
-        location: {
-          latitude: parseFloat(latitude),
-          longitude: parseFloat(longitude)
-        },
         adminId: user.uid,
         createdAt: new Date().toISOString()
       };
@@ -166,46 +157,6 @@ const SchoolRegister = () => {
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   placeholder="Enter phone number"
                   required
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="latitude">Latitude</Label>
-                  <Input
-                    id="latitude"
-                    type="number"
-                    step="any"
-                    value={latitude}
-                    onChange={(e) => setLatitude(e.target.value)}
-                    placeholder="Enter latitude"
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="longitude">Longitude</Label>
-                  <Input
-                    id="longitude"
-                    type="number"
-                    step="any"
-                    value={longitude}
-                    onChange={(e) => setLongitude(e.target.value)}
-                    placeholder="Enter longitude"
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="schoolImage">School Image</Label>
-                <Input
-                  id="schoolImage"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setSchoolImage(e.target.files?.[0] || null)}
                   disabled={isLoading}
                 />
               </div>
