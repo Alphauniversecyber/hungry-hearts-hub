@@ -71,7 +71,7 @@ const MainNav = () => {
     <nav className="border-b bg-white">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <Link to="/" className="text-2xl font-bold text-primary">
-          Hungry Hearts Hub
+          FeedNet
         </Link>
 
         <div className="flex items-center gap-6">
