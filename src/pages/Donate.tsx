@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, addDoc, getDocs } from "firebase/firestore";
@@ -23,9 +22,7 @@ interface School {
 
 const Donate = () => {
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
-  const [schools, setSchools] = useState<School[]>([]);
   const [selectedFood, setSelectedFood] = useState("");
-  const [selectedSchool, setSelectedSchool] = useState("");
   const [quantity, setQuantity] = useState("");
   const [note, setNote] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -45,21 +42,12 @@ const Donate = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch food items
         const foodSnapshot = await getDocs(collection(db, "foodItems"));
         const items = foodSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as FoodItem[];
         setFoodItems(items);
-
-        // Fetch schools
-        const schoolsSnapshot = await getDocs(collection(db, "schools"));
-        const schoolsList = schoolsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as School[];
-        setSchools(schoolsList);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -78,14 +66,15 @@ const Donate = () => {
         throw new Error("You must be logged in to donate");
       }
 
-      if (!selectedSchool) {
-        throw new Error("Please select a school");
+      const selectedSchoolId = localStorage.getItem("selectedSchoolId");
+      if (!selectedSchoolId) {
+        throw new Error("No school selected. Please return to home page and select a school");
       }
 
       await addDoc(collection(db, "donations"), {
         userId: user.uid,
         foodItemId: selectedFood,
-        schoolId: selectedSchool,
+        schoolId: selectedSchoolId,
         quantity,
         note,
         status: "pending",
@@ -98,7 +87,6 @@ const Donate = () => {
       });
 
       setSelectedFood("");
-      setSelectedSchool("");
       setQuantity("");
       setNote("");
     } catch (error: any) {
@@ -114,30 +102,19 @@ const Donate = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
-      <MainNav />
+      <div className="p-4 flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">FoodShare</h1>
+        <div className="text-right">
+          <p className="text-sm text-gray-600">Donating to:</p>
+          <p className="font-medium">{localStorage.getItem("selectedSchoolName")}</p>
+          <p className="text-sm text-gray-500">{localStorage.getItem("selectedSchoolAddress")}</p>
+        </div>
+      </div>
       <div className="p-8">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-3xl font-bold text-center mb-8">Donate Food</h1>
           <div className="bg-white p-6 rounded-lg shadow">
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">School</label>
-                <select
-                  value={selectedSchool}
-                  onChange={(e) => setSelectedSchool(e.target.value)}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2"
-                  required
-                  disabled={isLoading}
-                >
-                  <option value="">Select a school</option>
-                  {schools.map((school) => (
-                    <option key={school.id} value={school.id}>
-                      {school.name} - {school.address}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               <div>
                 <label className="block text-sm font-medium mb-1">Food Item</label>
                 <select
