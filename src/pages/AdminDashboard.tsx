@@ -96,27 +96,37 @@ const AdminDashboard = () => {
         })) as FoodItem[];
         setFoodItems(foodItemsList);
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const today = Timestamp.fromDate(new Date());
+        today.toDate().setHours(0, 0, 0, 0);
+        
         const donationsQuery = query(
           collection(db, "donations"),
-          where("createdAt", ">=", today.toISOString()),
           where("schoolId", "==", school.id)
         );
+        
         const donationsSnapshot = await getDocs(donationsQuery);
-        const donationsList = await Promise.all(donationsSnapshot.docs.map(async doc => {
-          const donationData = doc.data();
-          const userDoc = await getDocs(query(
-            collection(db, "users"),
-            where("uid", "==", donationData.userId)
-          ));
-          const userName = userDoc.docs[0]?.data()?.name || "Unknown User";
-          return {
-            id: doc.id,
-            ...donationData,
-            userName
-          };
-        })) as Donation[];
+        const donationsList = await Promise.all(
+          donationsSnapshot.docs
+            .filter(doc => {
+              const createdAt = new Date(doc.data().createdAt);
+              const todayStart = new Date();
+              todayStart.setHours(0, 0, 0, 0);
+              return createdAt >= todayStart;
+            })
+            .map(async doc => {
+              const donationData = doc.data();
+              const userDoc = await getDocs(query(
+                collection(db, "users"),
+                where("uid", "==", donationData.userId)
+              ));
+              const userName = userDoc.docs[0]?.data()?.name || "Unknown User";
+              return {
+                id: doc.id,
+                ...donationData,
+                userName
+              };
+            })
+        ) as Donation[];
 
         setDonations(donationsList);
       } catch (error) {
