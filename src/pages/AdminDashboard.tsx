@@ -38,13 +38,19 @@ interface FoodItem {
   name: string;
   description?: string;
   schoolId: string;
+  quantityNeeded?: number;
+  currentQuantity?: number;
 }
 
 const AdminDashboard = () => {
   const [school, setSchool] = useState<School | null>(null);
   const [donations, setDonations] = useState<Donation[]>([]);
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
-  const [newFoodItem, setNewFoodItem] = useState({ name: "", description: "" });
+  const [newFoodItem, setNewFoodItem] = useState({ 
+    name: "", 
+    description: "", 
+    quantityNeeded: 0 
+  });
   const [editingFoodItem, setEditingFoodItem] = useState<FoodItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingProfile, setEditingProfile] = useState(false);
@@ -143,38 +149,19 @@ const AdminDashboard = () => {
     fetchData();
   }, [school, toast]);
 
-  const handleUpdateProfile = async () => {
-    if (!updatedSchool || !school) return;
-
-    try {
-      await updateDoc(doc(db, "schools", school.id), {
-        name: updatedSchool.name,
-        address: updatedSchool.address,
-        phoneNumber: updatedSchool.phoneNumber,
-        location: updatedSchool.location
-      });
-
-      setSchool(updatedSchool);
-      setEditingProfile(false);
-      toast({
-        title: "Profile updated successfully",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error updating profile",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleAddFoodItem = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      if (!newFoodItem.quantityNeeded || newFoodItem.quantityNeeded <= 0) {
+        throw new Error("Please specify a valid quantity needed");
+      }
+
       await addDoc(collection(db, "foodItems"), {
         name: newFoodItem.name,
         description: newFoodItem.description,
         schoolId: school?.id,
+        quantityNeeded: Number(newFoodItem.quantityNeeded),
+        currentQuantity: 0,
         createdAt: Timestamp.now()
       });
 
@@ -192,7 +179,7 @@ const AdminDashboard = () => {
         ...doc.data()
       })) as FoodItem[];
       setFoodItems(updatedFoodItems);
-      setNewFoodItem({ name: "", description: "" });
+      setNewFoodItem({ name: "", description: "", quantityNeeded: 0 });
     } catch (error: any) {
       toast({
         title: "Error adding food item",
@@ -283,6 +270,40 @@ const AdminDashboard = () => {
     }
   };
 
+  const validatePhoneNumber = (phone: string) => {
+    const phoneRegex = /^\d{10}$/;
+    return phoneRegex.test(phone);
+  };
+
+  const handleUpdateProfile = async () => {
+    if (!updatedSchool || !school) return;
+
+    try {
+      if (!validatePhoneNumber(updatedSchool.phoneNumber)) {
+        throw new Error("Phone number must be exactly 10 digits");
+      }
+
+      await updateDoc(doc(db, "schools", school.id), {
+        name: updatedSchool.name,
+        address: updatedSchool.address,
+        phoneNumber: updatedSchool.phoneNumber,
+        location: updatedSchool.location
+      });
+
+      setSchool(updatedSchool);
+      setEditingProfile(false);
+      toast({
+        title: "Profile updated successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error updating profile",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -301,62 +322,15 @@ const AdminDashboard = () => {
           </Button>
         </div>
 
-        <Tabs defaultValue="profile" className="space-y-6">
+        <Tabs defaultValue="todays-donations" className="space-y-6">
           <TabsList>
+            <TabsTrigger value="todays-donations">Today's Donations</TabsTrigger>
+            <TabsTrigger value="food-items">Food Items</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="donations">Today's Donations</TabsTrigger>
-            <TabsTrigger value="foodItems">Food Items</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="profile" className="bg-white p-6 rounded-lg shadow">
-            {school && (
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold mb-4">School Profile</h2>
-                {editingProfile ? (
-                  <div className="space-y-4">
-                    <div>
-                      <Label>School Name</Label>
-                      <Input
-                        value={updatedSchool?.name}
-                        onChange={(e) => setUpdatedSchool(prev => ({ ...prev!, name: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <Label>Address</Label>
-                      <Textarea
-                        value={updatedSchool?.address}
-                        onChange={(e) => setUpdatedSchool(prev => ({ ...prev!, address: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <Label>Phone Number</Label>
-                      <Input
-                        value={updatedSchool?.phoneNumber}
-                        onChange={(e) => setUpdatedSchool(prev => ({ ...prev!, phoneNumber: e.target.value }))}
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={handleUpdateProfile}>Save Changes</Button>
-                      <Button variant="outline" onClick={() => {
-                        setEditingProfile(false);
-                        setUpdatedSchool(school);
-                      }}>Cancel</Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <p><strong>Name:</strong> {school.name}</p>
-                    <p><strong>Email:</strong> {school.email}</p>
-                    <p><strong>Address:</strong> {school.address}</p>
-                    <p><strong>Phone:</strong> {school.phoneNumber}</p>
-                    <Button onClick={() => setEditingProfile(true)}>Edit Profile</Button>
-                  </div>
-                )}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="donations" className="bg-white p-6 rounded-lg shadow">
+          <TabsContent value="todays-donations" className="bg-white p-6 rounded-lg shadow">
             <h2 className="text-xl font-semibold mb-4">Today's Donations</h2>
             {donations.length === 0 ? (
               <p className="text-gray-600">No donations today</p>
@@ -386,26 +360,36 @@ const AdminDashboard = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="foodItems" className="bg-white p-6 rounded-lg shadow">
+          <TabsContent value="food-items" className="bg-white p-6 rounded-lg shadow">
             <div className="space-y-6">
               <h2 className="text-xl font-semibold mb-4">
                 {editingFoodItem ? "Edit Food Item" : "Add New Food Item"}
               </h2>
               <form onSubmit={editingFoodItem ? handleUpdateFoodItem : handleAddFoodItem} className="space-y-4">
                 <div>
+                  <Label>Food Item Name</Label>
                   <Input
                     type="text"
-                    placeholder="Food Item Name"
                     value={newFoodItem.name}
                     onChange={(e) => setNewFoodItem(prev => ({ ...prev, name: e.target.value }))}
                     required
                   />
                 </div>
                 <div>
+                  <Label>Description (Optional)</Label>
                   <Textarea
-                    placeholder="Description (Optional)"
                     value={newFoodItem.description}
                     onChange={(e) => setNewFoodItem(prev => ({ ...prev, description: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label>Quantity Needed</Label>
+                  <Input
+                    type="number"
+                    value={newFoodItem.quantityNeeded}
+                    onChange={(e) => setNewFoodItem(prev => ({ ...prev, quantityNeeded: Number(e.target.value) }))}
+                    min="1"
+                    required
                   />
                 </div>
                 <div className="flex gap-2">
@@ -418,7 +402,7 @@ const AdminDashboard = () => {
                       variant="outline"
                       onClick={() => {
                         setEditingFoodItem(null);
-                        setNewFoodItem({ name: "", description: "" });
+                        setNewFoodItem({ name: "", description: "", quantityNeeded: 0 });
                       }}
                     >
                       Cancel
@@ -434,6 +418,8 @@ const AdminDashboard = () => {
                     <TableRow>
                       <TableHead>Name</TableHead>
                       <TableHead>Description</TableHead>
+                      <TableHead>Quantity Needed</TableHead>
+                      <TableHead>Current Quantity</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -442,6 +428,8 @@ const AdminDashboard = () => {
                       <TableRow key={item.id}>
                         <TableCell>{item.name}</TableCell>
                         <TableCell>{item.description || "N/A"}</TableCell>
+                        <TableCell>{item.quantityNeeded || 0}</TableCell>
+                        <TableCell>{item.currentQuantity || 0}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
                             <Button
@@ -466,6 +454,61 @@ const AdminDashboard = () => {
                 </Table>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="profile" className="bg-white p-6 rounded-lg shadow">
+            {school && (
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold mb-4">School Profile</h2>
+                {editingProfile ? (
+                  <div className="space-y-4">
+                    <div>
+                      <Label>School Name</Label>
+                      <Input
+                        value={updatedSchool?.name}
+                        onChange={(e) => setUpdatedSchool(prev => ({ ...prev!, name: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label>Address</Label>
+                      <Textarea
+                        value={updatedSchool?.address}
+                        onChange={(e) => setUpdatedSchool(prev => ({ ...prev!, address: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label>Phone Number (10 digits)</Label>
+                      <Input
+                        value={updatedSchool?.phoneNumber}
+                        onChange={(e) => setUpdatedSchool(prev => ({ ...prev!, phoneNumber: e.target.value }))}
+                        pattern="\d{10}"
+                        title="Phone number must be exactly 10 digits"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={handleUpdateProfile}>Save Changes</Button>
+                      <Button variant="outline" onClick={() => {
+                        setEditingProfile(false);
+                        setUpdatedSchool(school);
+                      }}>Cancel</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p><strong>Name:</strong> {school.name}</p>
+                    <p><strong>Email:</strong> {school.email}</p>
+                    <p><strong>Address:</strong> {school.address}</p>
+                    <p><strong>Phone:</strong> {school.phoneNumber}</p>
+                    <Button onClick={() => setEditingProfile(true)}>Edit Profile</Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="history" className="bg-white p-6 rounded-lg shadow">
+            <h2 className="text-xl font-semibold mb-4">Donation History</h2>
+            <p className="text-gray-600">Coming soon...</p>
           </TabsContent>
         </Tabs>
       </div>
