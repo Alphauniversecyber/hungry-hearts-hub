@@ -37,6 +37,7 @@ interface FoodItem {
   id: string;
   name: string;
   description?: string;
+  schoolId: string;
 }
 
 const AdminDashboard = () => {
@@ -59,7 +60,6 @@ const AdminDashboard = () => {
       }
 
       try {
-        // Fetch school data
         const schoolsRef = collection(db, "schools");
         const q = query(schoolsRef, where("adminId", "==", user.uid));
         const querySnapshot = await getDocs(q);
@@ -85,26 +85,27 @@ const AdminDashboard = () => {
       if (!school) return;
 
       try {
-        // Fetch food items
-        const foodItemsSnapshot = await getDocs(collection(db, "foodItems"));
+        const foodItemsQuery = query(
+          collection(db, "foodItems"),
+          where("schoolId", "==", school.id)
+        );
+        const foodItemsSnapshot = await getDocs(foodItemsQuery);
         const foodItemsList = foodItemsSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as FoodItem[];
         setFoodItems(foodItemsList);
 
-        // Fetch today's donations for this school
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const q = query(
+        const donationsQuery = query(
           collection(db, "donations"),
           where("createdAt", ">=", today.toISOString()),
           where("schoolId", "==", school.id)
         );
-        const donationsSnapshot = await getDocs(q);
+        const donationsSnapshot = await getDocs(donationsQuery);
         const donationsList = await Promise.all(donationsSnapshot.docs.map(async doc => {
           const donationData = doc.data();
-          // Fetch user name for each donation
           const userDoc = await getDocs(query(
             collection(db, "users"),
             where("uid", "==", donationData.userId)
@@ -163,6 +164,7 @@ const AdminDashboard = () => {
       await addDoc(collection(db, "foodItems"), {
         name: newFoodItem.name,
         description: newFoodItem.description,
+        schoolId: school?.id,
         createdAt: Timestamp.now()
       });
 
@@ -170,8 +172,11 @@ const AdminDashboard = () => {
         title: "Food item added successfully",
       });
 
-      // Refresh food items list
-      const snapshot = await getDocs(collection(db, "foodItems"));
+      const foodItemsQuery = query(
+        collection(db, "foodItems"),
+        where("schoolId", "==", school?.id)
+      );
+      const snapshot = await getDocs(foodItemsQuery);
       const updatedFoodItems = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -193,9 +198,13 @@ const AdminDashboard = () => {
   };
 
   const handleUpdateFoodItem = async () => {
-    if (!editingFoodItem) return;
+    if (!editingFoodItem || !school) return;
 
     try {
+      if (editingFoodItem.schoolId !== school.id) {
+        throw new Error("You don't have permission to edit this food item");
+      }
+
       await updateDoc(doc(db, "foodItems", editingFoodItem.id), {
         name: newFoodItem.name,
         description: newFoodItem.description,
@@ -205,8 +214,11 @@ const AdminDashboard = () => {
         title: "Food item updated successfully",
       });
 
-      // Refresh food items list
-      const snapshot = await getDocs(collection(db, "foodItems"));
+      const foodItemsQuery = query(
+        collection(db, "foodItems"),
+        where("schoolId", "==", school.id)
+      );
+      const snapshot = await getDocs(foodItemsQuery);
       const updatedFoodItems = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -224,7 +236,14 @@ const AdminDashboard = () => {
   };
 
   const handleDeleteFoodItem = async (id: string) => {
+    if (!school) return;
+
     try {
+      const foodItem = foodItems.find(item => item.id === id);
+      if (foodItem?.schoolId !== school.id) {
+        throw new Error("You don't have permission to delete this food item");
+      }
+
       await deleteDoc(doc(db, "foodItems", id));
       toast({
         title: "Food item deleted successfully",
