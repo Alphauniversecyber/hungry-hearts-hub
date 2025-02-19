@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createUserWithEmailAndPassword } from "firebase/auth";
@@ -17,8 +18,58 @@ const Register = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validateForm = () => {
+    if (!name.trim()) {
+      toast({
+        title: "Invalid name",
+        description: "Please enter your name",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!validateEmail(email)) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Invalid password",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!phone.trim()) {
+      toast({
+        title: "Invalid phone number",
+        description: "Please enter your phone number",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -38,14 +89,26 @@ const Register = () => {
 
       toast({
         title: "Registration successful",
-        description: "Welcome to the Food Management System!",
+        description: "Welcome to FeedNet!",
       });
       
       navigate("/donate");
     } catch (error: any) {
+      let errorMessage = "An error occurred during registration";
+      
+      if (error.code === "auth/email-already-in-use") {
+        errorMessage = "This email is already registered. Please use a different email or login instead.";
+      } else if (error.code === "auth/invalid-email") {
+        errorMessage = "Please enter a valid email address";
+      } else if (error.code === "auth/operation-not-allowed") {
+        errorMessage = "Email/password accounts are not enabled. Please contact support.";
+      } else if (error.code === "auth/weak-password") {
+        errorMessage = "Password should be at least 6 characters long";
+      }
+
       toast({
         title: "Registration failed",
-        description: error.message || "An error occurred during registration",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -77,7 +140,7 @@ const Register = () => {
                 type="email"
                 placeholder="Email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value.trim())}
                 required
                 disabled={isLoading}
               />
@@ -90,6 +153,7 @@ const Register = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
+                minLength={6}
               />
             </div>
             <div>
