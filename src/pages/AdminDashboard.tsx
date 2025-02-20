@@ -191,7 +191,11 @@ const AdminDashboard = () => {
 
   const handleEditFoodItem = async (item: FoodItem) => {
     setEditingFoodItem(item);
-    setNewFoodItem({ name: item.name, description: item.description || "" });
+    setNewFoodItem({ 
+      name: item.name, 
+      description: item.description || "", 
+      quantityNeeded: item.quantityNeeded || 0 
+    });
   };
 
   const handleUpdateFoodItem = async () => {
@@ -205,6 +209,7 @@ const AdminDashboard = () => {
       await updateDoc(doc(db, "foodItems", editingFoodItem.id), {
         name: newFoodItem.name,
         description: newFoodItem.description,
+        quantityNeeded: newFoodItem.quantityNeeded
       });
 
       toast({
@@ -222,7 +227,7 @@ const AdminDashboard = () => {
       })) as FoodItem[];
       setFoodItems(updatedFoodItems);
       setEditingFoodItem(null);
-      setNewFoodItem({ name: "", description: "" });
+      setNewFoodItem({ name: "", description: "", quantityNeeded: 0 });
     } catch (error: any) {
       toast({
         title: "Error updating food item",
