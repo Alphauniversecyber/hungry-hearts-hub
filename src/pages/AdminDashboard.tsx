@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
@@ -10,6 +9,7 @@ import { School, Donation, FoodItem } from "@/types/school";
 import { TodaysDonations } from "@/components/dashboard/TodaysDonations";
 import { FoodItems } from "@/components/dashboard/FoodItems";
 import { SchoolProfile } from "@/components/dashboard/SchoolProfile";
+import { DonationHistory } from "@/components/dashboard/DonationHistory";
 
 const AdminDashboard = () => {
   const [school, setSchool] = useState<School | null>(null);
@@ -142,17 +142,13 @@ const AdminDashboard = () => {
           </Button>
         </div>
 
-        <Tabs defaultValue="todays-donations" className="space-y-6">
+        <Tabs defaultValue="food-items" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="todays-donations">Today's Donations</TabsTrigger>
             <TabsTrigger value="food-items">Food Items</TabsTrigger>
+            <TabsTrigger value="todays-donations">Today's Donations</TabsTrigger>
+            <TabsTrigger value="history">Donation History</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="todays-donations">
-            <TodaysDonations donations={donations} foodItems={foodItems} />
-          </TabsContent>
 
           <TabsContent value="food-items">
             {school && (
@@ -160,6 +156,21 @@ const AdminDashboard = () => {
                 schoolId={school.id}
                 foodItems={foodItems}
                 setFoodItems={setFoodItems}
+                school={school}
+                setSchool={setSchool}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="todays-donations">
+            <TodaysDonations donations={donations} foodItems={foodItems} />
+          </TabsContent>
+
+          <TabsContent value="history">
+            {school && (
+              <DonationHistory
+                schoolId={school.id}
+                foodItems={foodItems}
               />
             )}
           </TabsContent>
@@ -171,11 +182,6 @@ const AdminDashboard = () => {
                 setSchool={setSchool}
               />
             )}
-          </TabsContent>
-
-          <TabsContent value="history" className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">Donation History</h2>
-            <p className="text-gray-600">Coming soon...</p>
           </TabsContent>
         </Tabs>
       </div>
