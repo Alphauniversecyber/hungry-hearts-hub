@@ -19,8 +19,7 @@ interface FoodItemsProps {
 export const FoodItems = ({ schoolId, foodItems, setFoodItems }: FoodItemsProps) => {
   const [newFoodItem, setNewFoodItem] = useState({ 
     name: "", 
-    description: "", 
-    quantityNeeded: 0 
+    description: ""
   });
   const [editingFoodItem, setEditingFoodItem] = useState<FoodItem | null>(null);
   const { toast } = useToast();
@@ -28,15 +27,10 @@ export const FoodItems = ({ schoolId, foodItems, setFoodItems }: FoodItemsProps)
   const handleAddFoodItem = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (!newFoodItem.quantityNeeded || newFoodItem.quantityNeeded <= 0) {
-        throw new Error("Please specify a valid quantity needed");
-      }
-
       await addDoc(collection(db, "foodItems"), {
         name: newFoodItem.name,
         description: newFoodItem.description,
         schoolId: schoolId,
-        quantityNeeded: Number(newFoodItem.quantityNeeded),
         currentQuantity: 0,
         createdAt: Timestamp.now()
       });
@@ -55,7 +49,7 @@ export const FoodItems = ({ schoolId, foodItems, setFoodItems }: FoodItemsProps)
         ...doc.data()
       })) as FoodItem[];
       setFoodItems(updatedFoodItems);
-      setNewFoodItem({ name: "", description: "", quantityNeeded: 0 });
+      setNewFoodItem({ name: "", description: "" });
     } catch (error: any) {
       toast({
         title: "Error adding food item",
@@ -69,8 +63,7 @@ export const FoodItems = ({ schoolId, foodItems, setFoodItems }: FoodItemsProps)
     setEditingFoodItem(item);
     setNewFoodItem({ 
       name: item.name, 
-      description: item.description || "", 
-      quantityNeeded: item.quantityNeeded || 0 
+      description: item.description || ""
     });
   };
 
@@ -84,8 +77,7 @@ export const FoodItems = ({ schoolId, foodItems, setFoodItems }: FoodItemsProps)
 
       await updateDoc(doc(db, "foodItems", editingFoodItem.id), {
         name: newFoodItem.name,
-        description: newFoodItem.description,
-        quantityNeeded: newFoodItem.quantityNeeded
+        description: newFoodItem.description
       });
 
       toast({
@@ -103,7 +95,7 @@ export const FoodItems = ({ schoolId, foodItems, setFoodItems }: FoodItemsProps)
       })) as FoodItem[];
       setFoodItems(updatedFoodItems);
       setEditingFoodItem(null);
-      setNewFoodItem({ name: "", description: "", quantityNeeded: 0 });
+      setNewFoodItem({ name: "", description: "" });
     } catch (error: any) {
       toast({
         title: "Error updating food item",
@@ -157,16 +149,6 @@ export const FoodItems = ({ schoolId, foodItems, setFoodItems }: FoodItemsProps)
               onChange={(e) => setNewFoodItem(prev => ({ ...prev, description: e.target.value }))}
             />
           </div>
-          <div>
-            <Label>Quantity Needed</Label>
-            <Input
-              type="number"
-              value={newFoodItem.quantityNeeded}
-              onChange={(e) => setNewFoodItem(prev => ({ ...prev, quantityNeeded: Number(e.target.value) }))}
-              min="1"
-              required
-            />
-          </div>
           <div className="flex gap-2">
             <Button type="submit">
               {editingFoodItem ? "Update Food Item" : "Add Food Item"}
@@ -177,7 +159,7 @@ export const FoodItems = ({ schoolId, foodItems, setFoodItems }: FoodItemsProps)
                 variant="outline"
                 onClick={() => {
                   setEditingFoodItem(null);
-                  setNewFoodItem({ name: "", description: "", quantityNeeded: 0 });
+                  setNewFoodItem({ name: "", description: "" });
                 }}
               >
                 Cancel
@@ -193,7 +175,6 @@ export const FoodItems = ({ schoolId, foodItems, setFoodItems }: FoodItemsProps)
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Description</TableHead>
-                <TableHead>Quantity Needed</TableHead>
                 <TableHead>Current Quantity</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -203,7 +184,6 @@ export const FoodItems = ({ schoolId, foodItems, setFoodItems }: FoodItemsProps)
                 <TableRow key={item.id}>
                   <TableCell>{item.name}</TableCell>
                   <TableCell>{item.description || "N/A"}</TableCell>
-                  <TableCell>{item.quantityNeeded || 0}</TableCell>
                   <TableCell>{item.currentQuantity || 0}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
