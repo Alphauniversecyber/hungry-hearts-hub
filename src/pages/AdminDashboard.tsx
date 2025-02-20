@@ -1,60 +1,21 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, Timestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
-
-interface School {
-  id: string;
-  name: string;
-  email: string;
-  address: string;
-  phoneNumber: string;
-  location: {
-    latitude: number;
-    longitude: number;
-  };
-}
-
-interface Donation {
-  id: string;
-  userId: string;
-  foodItemId: string;
-  quantity: string;
-  note: string;
-  createdAt: string;
-  userName?: string;
-  schoolId: string;
-}
-
-interface FoodItem {
-  id: string;
-  name: string;
-  description?: string;
-  schoolId: string;
-  quantityNeeded?: number;
-  currentQuantity?: number;
-}
+import { School, Donation, FoodItem } from "@/types/school";
+import { TodaysDonations } from "@/components/dashboard/TodaysDonations";
+import { FoodItems } from "@/components/dashboard/FoodItems";
+import { SchoolProfile } from "@/components/dashboard/SchoolProfile";
 
 const AdminDashboard = () => {
   const [school, setSchool] = useState<School | null>(null);
   const [donations, setDonations] = useState<Donation[]>([]);
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
-  const [newFoodItem, setNewFoodItem] = useState({ 
-    name: "", 
-    description: "", 
-    quantityNeeded: 0 
-  });
-  const [editingFoodItem, setEditingFoodItem] = useState<FoodItem | null>(null);
   const [loading, setLoading] = useState(true);
-  const [editingProfile, setEditingProfile] = useState(false);
-  const [updatedSchool, setUpdatedSchool] = useState<School | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -76,7 +37,6 @@ const AdminDashboard = () => {
             ...querySnapshot.docs[0].data()
           } as School;
           setSchool(schoolData);
-          setUpdatedSchool(schoolData);
         }
       } catch (error) {
         console.error("Error fetching school data:", error);
@@ -149,117 +109,6 @@ const AdminDashboard = () => {
     fetchData();
   }, [school, toast]);
 
-  const handleAddFoodItem = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (!newFoodItem.quantityNeeded || newFoodItem.quantityNeeded <= 0) {
-        throw new Error("Please specify a valid quantity needed");
-      }
-
-      await addDoc(collection(db, "foodItems"), {
-        name: newFoodItem.name,
-        description: newFoodItem.description,
-        schoolId: school?.id,
-        quantityNeeded: Number(newFoodItem.quantityNeeded),
-        currentQuantity: 0,
-        createdAt: Timestamp.now()
-      });
-
-      toast({
-        title: "Food item added successfully",
-      });
-
-      const foodItemsQuery = query(
-        collection(db, "foodItems"),
-        where("schoolId", "==", school?.id)
-      );
-      const snapshot = await getDocs(foodItemsQuery);
-      const updatedFoodItems = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as FoodItem[];
-      setFoodItems(updatedFoodItems);
-      setNewFoodItem({ name: "", description: "", quantityNeeded: 0 });
-    } catch (error: any) {
-      toast({
-        title: "Error adding food item",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleEditFoodItem = async (item: FoodItem) => {
-    setEditingFoodItem(item);
-    setNewFoodItem({ 
-      name: item.name, 
-      description: item.description || "", 
-      quantityNeeded: item.quantityNeeded || 0 
-    });
-  };
-
-  const handleUpdateFoodItem = async () => {
-    if (!editingFoodItem || !school) return;
-
-    try {
-      if (editingFoodItem.schoolId !== school.id) {
-        throw new Error("You don't have permission to edit this food item");
-      }
-
-      await updateDoc(doc(db, "foodItems", editingFoodItem.id), {
-        name: newFoodItem.name,
-        description: newFoodItem.description,
-        quantityNeeded: newFoodItem.quantityNeeded
-      });
-
-      toast({
-        title: "Food item updated successfully",
-      });
-
-      const foodItemsQuery = query(
-        collection(db, "foodItems"),
-        where("schoolId", "==", school.id)
-      );
-      const snapshot = await getDocs(foodItemsQuery);
-      const updatedFoodItems = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as FoodItem[];
-      setFoodItems(updatedFoodItems);
-      setEditingFoodItem(null);
-      setNewFoodItem({ name: "", description: "", quantityNeeded: 0 });
-    } catch (error: any) {
-      toast({
-        title: "Error updating food item",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteFoodItem = async (id: string) => {
-    if (!school) return;
-
-    try {
-      const foodItem = foodItems.find(item => item.id === id);
-      if (foodItem?.schoolId !== school.id) {
-        throw new Error("You don't have permission to delete this food item");
-      }
-
-      await deleteDoc(doc(db, "foodItems", id));
-      toast({
-        title: "Food item deleted successfully",
-      });
-      setFoodItems(foodItems.filter(item => item.id !== id));
-    } catch (error: any) {
-      toast({
-        title: "Error deleting food item",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleLogout = async () => {
     try {
       await auth.signOut();
@@ -270,40 +119,6 @@ const AdminDashboard = () => {
     } catch (error) {
       toast({
         title: "Error logging out",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const validatePhoneNumber = (phone: string) => {
-    const phoneRegex = /^\d{10}$/;
-    return phoneRegex.test(phone);
-  };
-
-  const handleUpdateProfile = async () => {
-    if (!updatedSchool || !school) return;
-
-    try {
-      if (!validatePhoneNumber(updatedSchool.phoneNumber)) {
-        throw new Error("Phone number must be exactly 10 digits");
-      }
-
-      await updateDoc(doc(db, "schools", school.id), {
-        name: updatedSchool.name,
-        address: updatedSchool.address,
-        phoneNumber: updatedSchool.phoneNumber,
-        location: updatedSchool.location
-      });
-
-      setSchool(updatedSchool);
-      setEditingProfile(false);
-      toast({
-        title: "Profile updated successfully",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error updating profile",
-        description: error.message,
         variant: "destructive",
       });
     }
@@ -335,179 +150,26 @@ const AdminDashboard = () => {
             <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="todays-donations" className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">Today's Donations</h2>
-            {donations.length === 0 ? (
-              <p className="text-gray-600">No donations today</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Donor</TableHead>
-                    <TableHead>Food Item</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Note</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {donations.map((donation) => (
-                    <TableRow key={donation.id}>
-                      <TableCell>{donation.userName}</TableCell>
-                      <TableCell>
-                        {foodItems.find(item => item.id === donation.foodItemId)?.name || "Unknown Item"}
-                      </TableCell>
-                      <TableCell>{donation.quantity}</TableCell>
-                      <TableCell>{donation.note || "N/A"}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+          <TabsContent value="todays-donations">
+            <TodaysDonations donations={donations} foodItems={foodItems} />
+          </TabsContent>
+
+          <TabsContent value="food-items">
+            {school && (
+              <FoodItems
+                schoolId={school.id}
+                foodItems={foodItems}
+                setFoodItems={setFoodItems}
+              />
             )}
           </TabsContent>
 
-          <TabsContent value="food-items" className="bg-white p-6 rounded-lg shadow">
-            <div className="space-y-6">
-              <h2 className="text-xl font-semibold mb-4">
-                {editingFoodItem ? "Edit Food Item" : "Add New Food Item"}
-              </h2>
-              <form onSubmit={editingFoodItem ? handleUpdateFoodItem : handleAddFoodItem} className="space-y-4">
-                <div>
-                  <Label>Food Item Name</Label>
-                  <Input
-                    type="text"
-                    value={newFoodItem.name}
-                    onChange={(e) => setNewFoodItem(prev => ({ ...prev, name: e.target.value }))}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label>Description (Optional)</Label>
-                  <Textarea
-                    value={newFoodItem.description}
-                    onChange={(e) => setNewFoodItem(prev => ({ ...prev, description: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label>Quantity Needed</Label>
-                  <Input
-                    type="number"
-                    value={newFoodItem.quantityNeeded}
-                    onChange={(e) => setNewFoodItem(prev => ({ ...prev, quantityNeeded: Number(e.target.value) }))}
-                    min="1"
-                    required
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button type="submit">
-                    {editingFoodItem ? "Update Food Item" : "Add Food Item"}
-                  </Button>
-                  {editingFoodItem && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setEditingFoodItem(null);
-                        setNewFoodItem({ name: "", description: "", quantityNeeded: 0 });
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  )}
-                </div>
-              </form>
-
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-3">Food Items List</h3>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Quantity Needed</TableHead>
-                      <TableHead>Current Quantity</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {foodItems.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell>{item.description || "N/A"}</TableCell>
-                        <TableCell>{item.quantityNeeded || 0}</TableCell>
-                        <TableCell>{item.currentQuantity || 0}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEditFoodItem(item)}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDeleteFoodItem(item.id)}
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="profile" className="bg-white p-6 rounded-lg shadow">
+          <TabsContent value="profile">
             {school && (
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold mb-4">School Profile</h2>
-                {editingProfile ? (
-                  <div className="space-y-4">
-                    <div>
-                      <Label>School Name</Label>
-                      <Input
-                        value={updatedSchool?.name}
-                        onChange={(e) => setUpdatedSchool(prev => ({ ...prev!, name: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <Label>Address</Label>
-                      <Textarea
-                        value={updatedSchool?.address}
-                        onChange={(e) => setUpdatedSchool(prev => ({ ...prev!, address: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <Label>Phone Number (10 digits)</Label>
-                      <Input
-                        value={updatedSchool?.phoneNumber}
-                        onChange={(e) => setUpdatedSchool(prev => ({ ...prev!, phoneNumber: e.target.value }))}
-                        pattern="\d{10}"
-                        title="Phone number must be exactly 10 digits"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={handleUpdateProfile}>Save Changes</Button>
-                      <Button variant="outline" onClick={() => {
-                        setEditingProfile(false);
-                        setUpdatedSchool(school);
-                      }}>Cancel</Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <p><strong>Name:</strong> {school.name}</p>
-                    <p><strong>Email:</strong> {school.email}</p>
-                    <p><strong>Address:</strong> {school.address}</p>
-                    <p><strong>Phone:</strong> {school.phoneNumber}</p>
-                    <Button onClick={() => setEditingProfile(true)}>Edit Profile</Button>
-                  </div>
-                )}
-              </div>
+              <SchoolProfile
+                school={school}
+                setSchool={setSchool}
+              />
             )}
           </TabsContent>
 
