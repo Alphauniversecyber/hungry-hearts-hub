@@ -1,4 +1,3 @@
-
 export interface School {
   id: string;
   name: string;
@@ -9,6 +8,7 @@ export interface School {
     latitude: number;
     longitude: number;
   };
+  totalFoodNeeded?: number;
 }
 
 export interface Donation {

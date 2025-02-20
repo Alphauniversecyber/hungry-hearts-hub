@@ -16,6 +16,7 @@ interface SchoolProfileProps {
 
 export const SchoolProfile = ({ school, setSchool }: SchoolProfileProps) => {
   const [editingProfile, setEditingProfile] = useState(false);
+  const [editingFoodNeeded, setEditingFoodNeeded] = useState(false);
   const [updatedSchool, setUpdatedSchool] = useState<School>(school);
   const { toast } = useToast();
 
@@ -51,8 +52,32 @@ export const SchoolProfile = ({ school, setSchool }: SchoolProfileProps) => {
     }
   };
 
+  const handleUpdateTotalFoodNeeded = async () => {
+    try {
+      if (!updatedSchool.totalFoodNeeded || updatedSchool.totalFoodNeeded <= 0) {
+        throw new Error("Please enter a valid quantity");
+      }
+
+      await updateDoc(doc(db, "schools", school.id), {
+        totalFoodNeeded: updatedSchool.totalFoodNeeded
+      });
+
+      setSchool(updatedSchool);
+      setEditingFoodNeeded(false);
+      toast({
+        title: "Total food needed updated successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error updating total food needed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
+    <div className="bg-white p-6 rounded-lg shadow space-y-8">
       <div className="space-y-4">
         <h2 className="text-xl font-semibold mb-4">School Profile</h2>
         {editingProfile ? (
@@ -95,6 +120,38 @@ export const SchoolProfile = ({ school, setSchool }: SchoolProfileProps) => {
             <p><strong>Address:</strong> {school.address}</p>
             <p><strong>Phone:</strong> {school.phoneNumber}</p>
             <Button onClick={() => setEditingProfile(true)}>Edit Profile</Button>
+          </div>
+        )}
+      </div>
+
+      <div className="border-t pt-6 space-y-4">
+        <h2 className="text-xl font-semibold mb-4">Total Food Needed</h2>
+        {editingFoodNeeded ? (
+          <div className="space-y-4">
+            <div>
+              <Label>Total Quantity Needed</Label>
+              <Input
+                type="number"
+                min="1"
+                value={updatedSchool.totalFoodNeeded || 0}
+                onChange={(e) => setUpdatedSchool(prev => ({ 
+                  ...prev, 
+                  totalFoodNeeded: Number(e.target.value) 
+                }))}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleUpdateTotalFoodNeeded}>Save Total Quantity</Button>
+              <Button variant="outline" onClick={() => {
+                setEditingFoodNeeded(false);
+                setUpdatedSchool(school);
+              }}>Cancel</Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <p><strong>Total Food Needed:</strong> {school.totalFoodNeeded || 0}</p>
+            <Button onClick={() => setEditingFoodNeeded(true)}>Update Total Food Needed</Button>
           </div>
         )}
       </div>
