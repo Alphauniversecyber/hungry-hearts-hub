@@ -1,10 +1,20 @@
 
 import { useState, useEffect } from "react";
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc, DocumentData } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { Donation } from "@/types/school";
+
+interface SchoolData {
+  name: string;
+  [key: string]: any;
+}
+
+interface FoodItemData {
+  name: string;
+  [key: string]: any;
+}
 
 interface DonationWithSchoolName extends Donation {
   schoolName: string;
@@ -28,19 +38,23 @@ export const DonatorHistory = () => {
         );
         
         const donationsSnapshot = await getDocs(donationsQuery);
-        const donationsPromises = donationsSnapshot.docs.map(async (doc) => {
-          const data = doc.data();
+        const donationsPromises = donationsSnapshot.docs.map(async (donationDoc) => {
+          const data = donationDoc.data();
           
-          // Fetch school name
-          const schoolDoc = await getDoc(doc(db, "schools", data.schoolId));
-          const schoolName = schoolDoc.exists() ? schoolDoc.data().name : "Unknown School";
+          // Fetch school data
+          const schoolDocRef = doc(db, "schools", data.schoolId);
+          const schoolDocSnap = await getDoc(schoolDocRef);
+          const schoolData = schoolDocSnap.data() as SchoolData;
+          const schoolName = schoolDocSnap.exists() ? schoolData.name : "Unknown School";
           
-          // Fetch food item name
-          const foodItemDoc = await getDoc(doc(db, "foodItems", data.foodItemId));
-          const foodItemName = foodItemDoc.exists() ? foodItemDoc.data().name : "Unknown Item";
+          // Fetch food item data
+          const foodItemDocRef = doc(db, "foodItems", data.foodItemId);
+          const foodItemDocSnap = await getDoc(foodItemDocRef);
+          const foodItemData = foodItemDocSnap.data() as FoodItemData;
+          const foodItemName = foodItemDocSnap.exists() ? foodItemData.name : "Unknown Item";
 
           return {
-            id: doc.id,
+            id: donationDoc.id,
             userId: data.userId,
             foodItemId: data.foodItemId,
             quantity: data.quantity,
