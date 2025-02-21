@@ -1,13 +1,18 @@
 
 import { useState, useEffect } from "react";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { Donation } from "@/types/school";
 
+interface DonationWithSchoolName extends Donation {
+  schoolName: string;
+  foodItemName: string;
+}
+
 export const DonatorHistory = () => {
-  const [donations, setDonations] = useState<Donation[]>([]);
+  const [donations, setDonations] = useState<DonationWithSchoolName[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const user = auth.currentUser;
@@ -23,8 +28,17 @@ export const DonatorHistory = () => {
         );
         
         const donationsSnapshot = await getDocs(donationsQuery);
-        const donationsList = donationsSnapshot.docs.map(doc => {
+        const donationsPromises = donationsSnapshot.docs.map(async (doc) => {
           const data = doc.data();
+          
+          // Fetch school name
+          const schoolDoc = await getDoc(doc(db, "schools", data.schoolId));
+          const schoolName = schoolDoc.exists() ? schoolDoc.data().name : "Unknown School";
+          
+          // Fetch food item name
+          const foodItemDoc = await getDoc(doc(db, "foodItems", data.foodItemId));
+          const foodItemName = foodItemDoc.exists() ? foodItemDoc.data().name : "Unknown Item";
+
           return {
             id: doc.id,
             userId: data.userId,
@@ -34,9 +48,13 @@ export const DonatorHistory = () => {
             createdAt: data.createdAt,
             userName: user.displayName || "Unknown User",
             schoolId: data.schoolId,
-            status: "completed"
-          } as Donation;
+            status: "completed",
+            schoolName,
+            foodItemName
+          } as DonationWithSchoolName;
         });
+
+        const donationsList = await Promise.all(donationsPromises);
 
         // Sort by date descending
         const sortedDonations = donationsList.sort((a, b) => 
@@ -86,12 +104,8 @@ export const DonatorHistory = () => {
                 <TableCell>
                   {new Date(donation.createdAt).toLocaleDateString()}
                 </TableCell>
-                <TableCell>
-                  {localStorage.getItem(`school_${donation.schoolId}_name`) || "Unknown School"}
-                </TableCell>
-                <TableCell>
-                  {localStorage.getItem(`foodItem_${donation.foodItemId}_name`) || "Unknown Item"}
-                </TableCell>
+                <TableCell>{donation.schoolName}</TableCell>
+                <TableCell>{donation.foodItemName}</TableCell>
                 <TableCell>{donation.quantity}</TableCell>
                 <TableCell>{donation.note || "N/A"}</TableCell>
               </TableRow>
