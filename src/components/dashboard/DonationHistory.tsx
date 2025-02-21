@@ -23,37 +23,52 @@ export const DonationHistory = ({ schoolId, foodItems }: DonationHistoryProps) =
 
   const fetchDonations = async () => {
     try {
+      // First, create a basic query without orderBy
       const donationsQuery = query(
         collection(db, "donations"),
-        where("schoolId", "==", schoolId),
-        orderBy("createdAt", "desc")
+        where("schoolId", "==", schoolId)
       );
       
       const donationsSnapshot = await getDocs(donationsQuery);
       const donationsList = await Promise.all(
         donationsSnapshot.docs.map(async doc => {
           const donationData = doc.data();
+          // Fetch user data
           const userDoc = await getDocs(query(
             collection(db, "users"),
             where("uid", "==", donationData.userId)
           ));
           const userName = userDoc.docs[0]?.data()?.name || "Unknown User";
+          
           return {
             id: doc.id,
-            ...donationData,
-            userName
-          };
+            userId: donationData.userId,
+            foodItemId: donationData.foodItemId,
+            quantity: donationData.quantity,
+            note: donationData.note || "",
+            createdAt: donationData.createdAt,
+            userName: userName,
+            schoolId: schoolId,
+            status: "completed"
+          } as Donation;
         })
-      ) as Donation[];
+      );
 
-      setDonations(donationsList);
+      // Sort donations by date client-side
+      const sortedDonations = donationsList.sort((a, b) => {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+
+      setDonations(sortedDonations);
       setLoading(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching donations:", error);
       toast({
         title: "Error fetching donation history",
+        description: "Please try again later",
         variant: "destructive",
       });
+      setLoading(false);
     }
   };
 
@@ -84,14 +99,14 @@ export const DonationHistory = ({ schoolId, foodItems }: DonationHistoryProps) =
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="p-4">Loading donation history...</div>;
   }
 
   return (
     <div className="bg-white p-6 rounded-lg shadow space-y-4">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">Donation History</h2>
-        <Button onClick={downloadExcel}>
+        <Button onClick={downloadExcel} disabled={donations.length === 0}>
           Download Excel
         </Button>
       </div>
