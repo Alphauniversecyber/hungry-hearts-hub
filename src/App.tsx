@@ -11,6 +11,7 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import Donate from "./pages/Donate";
 import History from "./pages/History";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import SchoolRegister from "./pages/SchoolRegister";
 
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/donate" element={<Donate />} />
           <Route path="/history" element={<History />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/school-register" element={<SchoolRegister />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

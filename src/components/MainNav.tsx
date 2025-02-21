@@ -1,3 +1,4 @@
+
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem } from "@/components/ui/navigation-menu";
 import { Link } from "react-router-dom";
 import { auth, db } from "@/lib/firebase";
@@ -7,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User } from "lucide-react";
 
 interface School {
   id: string;
@@ -119,6 +120,12 @@ const MainNav = () => {
                       </Link>
                     </NavigationMenuItem>
                     <NavigationMenuItem>
+                      <Link to="/profile" className="text-gray-600 hover:text-primary">
+                        <User size={20} className="inline mr-1" />
+                        Profile
+                      </Link>
+                    </NavigationMenuItem>
+                    <NavigationMenuItem>
                       <Button 
                         variant="ghost" 
                         onClick={handleLogout}
@@ -130,7 +137,7 @@ const MainNav = () => {
                   </>
                 ) : (
                   <NavigationMenuItem>
-                    <Link to="/register" className="text-gray-600 hover:text-primary">
+                    <Link to="/login" className="text-gray-600 hover:text-primary">
                       Sign In
                     </Link>
                   </NavigationMenuItem>
@@ -173,6 +180,14 @@ const MainNav = () => {
                   >
                     Donate
                   </Link>
+                  <Link 
+                    to="/profile" 
+                    className="text-gray-600 hover:text-primary p-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <User size={20} className="inline mr-1" />
+                    Profile
+                  </Link>
                   <Button 
                     variant="ghost" 
                     onClick={() => {
@@ -186,7 +201,7 @@ const MainNav = () => {
                 </>
               ) : (
                 <Link 
-                  to="/register" 
+                  to="/login" 
                   className="text-gray-600 hover:text-primary p-2"
                   onClick={() => setIsMenuOpen(false)}
                 >

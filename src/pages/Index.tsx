@@ -2,9 +2,20 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import MainNav from "@/components/MainNav";
+import { auth } from "@/lib/firebase";
+import { useEffect, useState } from "react";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsLoggedIn(!!user);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleDonate = () => {
     const selectedSchoolId = localStorage.getItem("selectedSchoolId");
@@ -39,13 +50,15 @@ const Index = () => {
               Donate Food
             </Button>
 
-            <Button
-              onClick={() => navigate("/login")}
-              variant="outline"
-              className="w-full"
-            >
-              Sign In / Register
-            </Button>
+            {!isLoggedIn && (
+              <Button
+                onClick={() => navigate("/login")}
+                variant="outline"
+                className="w-full"
+              >
+                Sign In
+              </Button>
+            )}
           </div>
         </div>
       </div>
