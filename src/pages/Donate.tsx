@@ -6,7 +6,6 @@ import { auth, db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import MainNav from "@/components/MainNav";
 import { School } from "@/types/school";
-import { DonatorHistory } from "@/components/DonatorHistory";
 import { SchoolInfo } from "@/components/donate/SchoolInfo";
 import { DonationForm } from "@/components/donate/DonationForm";
 
@@ -98,7 +97,7 @@ const Donate = () => {
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
       <MainNav />
       <div className="p-8">
-        <div className="max-w-2xl mx-auto space-y-8">
+        <div className="max-w-2xl mx-auto">
           <h1 className="text-3xl font-bold text-center mb-8">Donate Food</h1>
           <div className="bg-white p-6 rounded-lg shadow">
             {school && (
@@ -118,8 +117,6 @@ const Donate = () => {
               />
             )}
           </div>
-
-          <DonatorHistory />
         </div>
       </div>
     </div>
