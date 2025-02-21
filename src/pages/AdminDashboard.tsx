@@ -62,36 +62,32 @@ const AdminDashboard = () => {
         })) as FoodItem[];
         setFoodItems(foodItemsList);
 
-        const today = Timestamp.fromDate(new Date());
-        today.toDate().setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayTimestamp = Timestamp.fromDate(today);
         
         const donationsQuery = query(
           collection(db, "donations"),
-          where("schoolId", "==", school.id)
+          where("schoolId", "==", school.id),
+          where("createdAt", ">=", todayTimestamp.toDate().toISOString())
         );
         
         const donationsSnapshot = await getDocs(donationsQuery);
         const donationsList = await Promise.all(
-          donationsSnapshot.docs
-            .filter(doc => {
-              const createdAt = new Date(doc.data().createdAt);
-              const todayStart = new Date();
-              todayStart.setHours(0, 0, 0, 0);
-              return createdAt >= todayStart;
-            })
-            .map(async doc => {
-              const donationData = doc.data();
-              const userDoc = await getDocs(query(
-                collection(db, "users"),
-                where("uid", "==", donationData.userId)
-              ));
-              const userName = userDoc.docs[0]?.data()?.name || "Unknown User";
-              return {
-                id: doc.id,
-                ...donationData,
-                userName
-              };
-            })
+          donationsSnapshot.docs.map(async doc => {
+            const donationData = doc.data();
+            const userDoc = await getDocs(query(
+              collection(db, "users"),
+              where("uid", "==", donationData.userId)
+            ));
+            const userName = userDoc.docs[0]?.data()?.name || "Unknown User";
+            return {
+              id: doc.id,
+              ...donationData,
+              userName,
+              status: "completed"
+            };
+          })
         ) as Donation[];
 
         setDonations(donationsList);
@@ -142,13 +138,17 @@ const AdminDashboard = () => {
           </Button>
         </div>
 
-        <Tabs defaultValue="food-items" className="space-y-6">
+        <Tabs defaultValue="todays-donations" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="food-items">Food Items</TabsTrigger>
             <TabsTrigger value="todays-donations">Today's Donations</TabsTrigger>
+            <TabsTrigger value="food-items">Food Items</TabsTrigger>
             <TabsTrigger value="history">Donation History</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="todays-donations">
+            <TodaysDonations donations={donations} foodItems={foodItems} />
+          </TabsContent>
 
           <TabsContent value="food-items">
             {school && (
@@ -160,10 +160,6 @@ const AdminDashboard = () => {
                 setSchool={setSchool}
               />
             )}
-          </TabsContent>
-
-          <TabsContent value="todays-donations">
-            <TodaysDonations donations={donations} foodItems={foodItems} />
           </TabsContent>
 
           <TabsContent value="history">
