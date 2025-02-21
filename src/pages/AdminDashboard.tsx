@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
@@ -81,14 +82,20 @@ const AdminDashboard = () => {
               where("uid", "==", donationData.userId)
             ));
             const userName = userDoc.docs[0]?.data()?.name || "Unknown User";
+            
             return {
               id: doc.id,
-              ...donationData,
-              userName,
+              userId: donationData.userId,
+              foodItemId: donationData.foodItemId,
+              quantity: donationData.quantity,
+              note: donationData.note || "",
+              createdAt: donationData.createdAt,
+              userName: userName,
+              schoolId: school.id,
               status: "completed"
-            };
+            } as Donation;
           })
-        ) as Donation[];
+        );
 
         setDonations(donationsList);
       } catch (error) {
