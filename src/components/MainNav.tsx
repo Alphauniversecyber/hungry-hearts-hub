@@ -75,17 +75,18 @@ const MainNav = () => {
   };
 
   return (
-    <nav className="border-b bg-white">
+    <nav className="border-b bg-white/95 backdrop-blur-md sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-primary">
+          <Link to="/" className="text-2xl font-display font-semibold text-primary-600 hover:text-primary-700 transition-colors">
             FeedNet
           </Link>
 
           {/* Mobile menu button */}
           <button
             onClick={toggleMenu}
-            className="md:hidden p-2 text-gray-600 hover:text-primary"
+            className="md:hidden p-2 text-gray-600 hover:text-primary-600 transition-colors"
+            aria-label="Toggle menu"
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -93,7 +94,7 @@ const MainNav = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
             <Select value={selectedSchool} onValueChange={handleSchoolSelect}>
-              <SelectTrigger className="w-[300px]">
+              <SelectTrigger className="w-[300px] bg-white">
                 <SelectValue placeholder="Select a school" />
               </SelectTrigger>
               <SelectContent>
@@ -110,18 +111,18 @@ const MainNav = () => {
                 {user ? (
                   <>
                     <NavigationMenuItem>
-                      <Link to="/donate" className="text-gray-600 hover:text-primary">
+                      <Link to="/donate" className="nav-link">
                         Donate
                       </Link>
                     </NavigationMenuItem>
                     <NavigationMenuItem>
-                      <Link to="/history" className="text-gray-600 hover:text-primary">
+                      <Link to="/history" className="nav-link">
                         History
                       </Link>
                     </NavigationMenuItem>
                     <NavigationMenuItem>
-                      <Link to="/profile" className="text-gray-600 hover:text-primary">
-                        <User size={20} className="inline mr-1" />
+                      <Link to="/profile" className="nav-link flex items-center gap-2">
+                        <User size={18} className="text-gray-500" />
                         Profile
                       </Link>
                     </NavigationMenuItem>
@@ -129,7 +130,7 @@ const MainNav = () => {
                       <Button 
                         variant="ghost" 
                         onClick={handleLogout}
-                        className="text-gray-600 hover:text-primary"
+                        className="nav-link hover:bg-gray-100"
                       >
                         Logout
                       </Button>
@@ -137,7 +138,7 @@ const MainNav = () => {
                   </>
                 ) : (
                   <NavigationMenuItem>
-                    <Link to="/login" className="text-gray-600 hover:text-primary">
+                    <Link to="/login" className="nav-link">
                       Sign In
                     </Link>
                   </NavigationMenuItem>
@@ -149,9 +150,9 @@ const MainNav = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden mt-4 space-y-4">
+          <div className="md:hidden mt-4 space-y-4 bg-white rounded-lg p-4 shadow-lg border border-gray-100">
             <Select value={selectedSchool} onValueChange={handleSchoolSelect}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full bg-white">
                 <SelectValue placeholder="Select a school" />
               </SelectTrigger>
               <SelectContent>
@@ -168,24 +169,24 @@ const MainNav = () => {
                 <>
                   <Link 
                     to="/donate" 
-                    className="text-gray-600 hover:text-primary p-2"
+                    className="nav-link p-2 hover:bg-gray-50 rounded-md"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Donate
                   </Link>
                   <Link 
                     to="/history" 
-                    className="text-gray-600 hover:text-primary p-2"
+                    className="nav-link p-2 hover:bg-gray-50 rounded-md"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     History
                   </Link>
                   <Link 
                     to="/profile" 
-                    className="text-gray-600 hover:text-primary p-2"
+                    className="nav-link p-2 hover:bg-gray-50 rounded-md flex items-center gap-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <User size={20} className="inline mr-1" />
+                    <User size={18} className="text-gray-500" />
                     Profile
                   </Link>
                   <Button 
@@ -194,7 +195,7 @@ const MainNav = () => {
                       handleLogout();
                       setIsMenuOpen(false);
                     }}
-                    className="text-gray-600 hover:text-primary w-full justify-start"
+                    className="nav-link w-full justify-start p-2 hover:bg-gray-50"
                   >
                     Logout
                   </Button>
@@ -202,7 +203,7 @@ const MainNav = () => {
               ) : (
                 <Link 
                   to="/login" 
-                  className="text-gray-600 hover:text-primary p-2"
+                  className="nav-link p-2 hover:bg-gray-50 rounded-md"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Sign In
