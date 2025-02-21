@@ -52,6 +52,7 @@ const AdminDashboard = () => {
       if (!school) return;
 
       try {
+        // Fetch food items
         const foodItemsQuery = query(
           collection(db, "foodItems"),
           where("schoolId", "==", school.id)
@@ -63,18 +64,18 @@ const AdminDashboard = () => {
         })) as FoodItem[];
         setFoodItems(foodItemsList);
 
+        // Get today's start date
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const todayTimestamp = Timestamp.fromDate(today);
-        
+
+        // Get today's donations
         const donationsQuery = query(
           collection(db, "donations"),
-          where("schoolId", "==", school.id),
-          where("createdAt", ">=", todayTimestamp.toDate().toISOString())
+          where("schoolId", "==", school.id)
         );
         
         const donationsSnapshot = await getDocs(donationsQuery);
-        const donationsList = await Promise.all(
+        const allDonations = await Promise.all(
           donationsSnapshot.docs.map(async doc => {
             const donationData = doc.data();
             const userDoc = await getDocs(query(
@@ -97,7 +98,13 @@ const AdminDashboard = () => {
           })
         );
 
-        setDonations(donationsList);
+        // Filter today's donations client-side
+        const todaysDonations = allDonations.filter(donation => {
+          const donationDate = new Date(donation.createdAt);
+          return donationDate >= today && donationDate.getDate() === today.getDate();
+        });
+
+        setDonations(todaysDonations);
       } catch (error) {
         console.error("Error fetching data:", error);
         toast({
