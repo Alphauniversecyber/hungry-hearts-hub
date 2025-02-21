@@ -110,13 +110,13 @@ const MainNav = () => {
                 {user ? (
                   <>
                     <NavigationMenuItem>
-                      <Link to="/history" className="text-gray-600 hover:text-primary">
-                        History
+                      <Link to="/donate" className="text-gray-600 hover:text-primary">
+                        Donate
                       </Link>
                     </NavigationMenuItem>
                     <NavigationMenuItem>
-                      <Link to="/donate" className="text-gray-600 hover:text-primary">
-                        Donate
+                      <Link to="/history" className="text-gray-600 hover:text-primary">
+                        History
                       </Link>
                     </NavigationMenuItem>
                     <NavigationMenuItem>
@@ -167,18 +167,18 @@ const MainNav = () => {
               {user ? (
                 <>
                   <Link 
-                    to="/history" 
-                    className="text-gray-600 hover:text-primary p-2"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    History
-                  </Link>
-                  <Link 
                     to="/donate" 
                     className="text-gray-600 hover:text-primary p-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Donate
+                  </Link>
+                  <Link 
+                    to="/history" 
+                    className="text-gray-600 hover:text-primary p-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    History
                   </Link>
                   <Link 
                     to="/profile" 
