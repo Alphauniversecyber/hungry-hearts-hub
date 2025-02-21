@@ -1,4 +1,3 @@
-
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem } from "@/components/ui/navigation-menu";
 import { Link } from "react-router-dom";
 import { auth, db } from "@/lib/firebase";
@@ -50,6 +49,8 @@ const MainNav = () => {
       localStorage.setItem("selectedSchoolName", school.name);
       localStorage.setItem("selectedSchoolAddress", school.address);
     }
+    // Dispatch custom event for school change
+    window.dispatchEvent(new Event('schoolChanged'));
   };
 
   const handleLogout = async () => {

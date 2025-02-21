@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import MainNav from "@/components/MainNav";
 import { School } from "@/types/school";
+import { DonatorHistory } from "@/components/DonatorHistory";
 
 interface FoodItem {
   id: string;
@@ -53,7 +54,10 @@ const Donate = () => {
         // Fetch school data
         const schoolDoc = await getDoc(doc(db, "schools", selectedSchoolId));
         if (schoolDoc.exists()) {
-          setSchool({ id: schoolDoc.id, ...schoolDoc.data() } as School);
+          const schoolData = { id: schoolDoc.id, ...schoolDoc.data() } as School;
+          setSchool(schoolData);
+          // Store school name for history
+          localStorage.setItem(`school_${schoolDoc.id}_name`, schoolData.name);
         }
 
         // Query food items for the selected school only
@@ -62,10 +66,15 @@ const Donate = () => {
           where("schoolId", "==", selectedSchoolId)
         );
         const foodSnapshot = await getDocs(foodItemsQuery);
-        const items = foodSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as FoodItem[];
+        const items = foodSnapshot.docs.map(doc => {
+          const data = doc.data();
+          // Store food item name for history
+          localStorage.setItem(`foodItem_${doc.id}_name`, data.name);
+          return {
+            id: doc.id,
+            ...data
+          } as FoodItem;
+        });
         setFoodItems(items);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -79,6 +88,16 @@ const Donate = () => {
 
     fetchData();
   }, [toast]);
+
+  // Add school change handler to MainNav
+  useEffect(() => {
+    const handleSchoolChange = () => {
+      window.location.reload();
+    };
+
+    window.addEventListener('schoolChanged', handleSchoolChange);
+    return () => window.removeEventListener('schoolChanged', handleSchoolChange);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +116,6 @@ const Donate = () => {
 
       const quantityNum = parseInt(quantity);
       
-      // Check if donation exceeds total needed
       if (school?.totalFoodNeeded !== undefined) {
         if (quantityNum > school.totalFoodNeeded) {
           throw new Error(`Maximum donation amount is ${school.totalFoodNeeded}`);
@@ -109,7 +127,7 @@ const Donate = () => {
         userId: user.uid,
         foodItemId: selectedFood,
         schoolId: selectedSchoolId,
-        quantity,
+        quantity: quantityNum,
         note,
         status: "pending",
         createdAt: new Date().toISOString()
@@ -143,14 +161,13 @@ const Donate = () => {
     }
   };
 
-  // Check if school is no longer accepting donations
   const isAcceptingDonations = !school?.totalFoodNeeded || school.totalFoodNeeded > 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
       <MainNav />
       <div className="p-8">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto space-y-8">
           <h1 className="text-3xl font-bold text-center mb-8">Donate Food</h1>
           <div className="bg-white p-6 rounded-lg shadow">
             {school && (
@@ -223,6 +240,9 @@ const Donate = () => {
               </form>
             )}
           </div>
+
+          {/* Add the donation history section */}
+          <DonatorHistory />
         </div>
       </div>
     </div>
