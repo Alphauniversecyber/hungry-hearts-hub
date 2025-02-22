@@ -37,7 +37,7 @@ const SuperAdminLogin = () => {
         title: "Login successful",
         description: "Welcome back, Super Admin!",
       });
-      navigate("/admin"); // You might want to create a separate super admin dashboard later
+      navigate("/super-admin"); // Navigate to super admin dashboard
     } catch (error: any) {
       let errorMessage = "Login failed";
       
