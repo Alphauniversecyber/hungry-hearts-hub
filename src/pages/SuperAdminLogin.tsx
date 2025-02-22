@@ -2,35 +2,28 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import MainNav from "@/components/MainNav";
-import { Link } from "react-router-dom";
 
-const AdminLogin = () => {
+const SuperAdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Validate email format first
-    if (!validateEmail(email)) {
+    // Check if it's the super admin credentials
+    if (email !== "programx010@gmail.com") {
       toast({
-        title: "Invalid email",
-        description: "Please enter a valid email address",
+        title: "Access Denied",
+        description: "This login is only for super administrators",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -38,42 +31,26 @@ const AdminLogin = () => {
     }
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, email, password);
       
-      // Check if this user is associated with a school
-      const schoolsRef = collection(db, "schools");
-      const q = query(schoolsRef, where("adminId", "==", userCredential.user.uid));
-      const querySnapshot = await getDocs(q);
-      
-      if (querySnapshot.empty) {
-        await auth.signOut(); // Sign out if not an admin
-        throw new Error("This account does not have admin privileges");
-      }
-
       toast({
         title: "Login successful",
-        description: "Welcome back to your school dashboard!",
+        description: "Welcome back, Super Admin!",
       });
-      navigate("/admin");
+      navigate("/admin"); // You might want to create a separate super admin dashboard later
     } catch (error: any) {
       let errorMessage = "Login failed";
       
       // Handle specific Firebase auth errors
       switch (error.code) {
-        case 'auth/user-not-found':
-          errorMessage = "No account found with this email address";
-          break;
         case 'auth/wrong-password':
           errorMessage = "Incorrect password";
-          break;
-        case 'auth/invalid-email':
-          errorMessage = "Invalid email format";
           break;
         case 'auth/too-many-requests':
           errorMessage = "Too many failed attempts. Please try again later";
           break;
         default:
-          errorMessage = error.message || "Invalid credentials";
+          errorMessage = "Invalid credentials";
       }
 
       toast({
@@ -92,13 +69,13 @@ const AdminLogin = () => {
       <div className="flex items-center justify-center p-8">
         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
           <h2 className="text-3xl font-heading font-bold text-gray-900 mb-6 text-center">
-            School Login
+            Super Admin Login
           </h2>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <Input
                 type="email"
-                placeholder="School Email"
+                placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value.trim())}
                 required
@@ -124,19 +101,6 @@ const AdminLogin = () => {
             >
               {isLoading ? "Logging in..." : "Login"}
             </Button>
-            <div className="space-y-2 text-center">
-              <p className="text-sm text-gray-600">
-                Don't have a school account?{" "}
-                <Link to="/school-register" className="text-primary hover:underline">
-                  Register your school
-                </Link>
-              </p>
-              <p className="text-sm text-gray-600">
-                <Link to="/super-admin-login" className="text-primary hover:underline">
-                  Super Admin Login
-                </Link>
-              </p>
-            </div>
           </form>
         </div>
       </div>
@@ -144,4 +108,4 @@ const AdminLogin = () => {
   );
 };
 
-export default AdminLogin;
+export default SuperAdminLogin;
