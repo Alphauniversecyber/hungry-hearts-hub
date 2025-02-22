@@ -169,6 +169,7 @@ const SuperAdminDashboard = () => {
                     <TableRow>
                       <TableHead>Name</TableHead>
                       <TableHead className="hidden md:table-cell">Email</TableHead>
+                      <TableHead className="hidden md:table-cell">Phone</TableHead>
                       <TableHead>Donations</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -184,6 +185,9 @@ const SuperAdminDashboard = () => {
                       >
                         <TableCell>{user.name}</TableCell>
                         <TableCell className="hidden md:table-cell">{user.email}</TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          {user.phoneNumber || "Not provided"}
+                        </TableCell>
                         <TableCell>
                           {donations.filter(d => d.userId === user.uid).length}
                         </TableCell>
