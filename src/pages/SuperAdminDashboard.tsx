@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { School, DetailedDonation } from "@/types/school";
 import MainNav from "@/components/MainNav";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface User {
   uid: string;
@@ -109,151 +110,167 @@ const SuperAdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <MainNav />
-      <div className="container mx-auto p-6">
-        <h1 className="text-3xl font-heading font-bold text-gray-900 mb-6">
+      <div className="container mx-auto p-4">
+        <h1 className="text-2xl md:text-3xl font-heading font-bold text-gray-900 mb-4">
           Super Admin Dashboard
         </h1>
 
-        <Tabs defaultValue="schools" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="schools">Schools</TabsTrigger>
-            <TabsTrigger value="donators">Donators</TabsTrigger>
+        <Tabs defaultValue="schools" className="space-y-4">
+          <TabsList className="w-full flex">
+            <TabsTrigger value="schools" className="flex-1">Schools</TabsTrigger>
+            <TabsTrigger value="donators" className="flex-1">Donators</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="schools" className="bg-white rounded-lg shadow-lg p-6">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>School Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Address</TableHead>
-                  <TableHead>Phone Number</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {schools.map((school) => (
-                  <TableRow
-                    key={school.id}
-                    className="cursor-pointer hover:bg-gray-50"
-                    onClick={() => handleRowClick(school)}
-                  >
-                    <TableCell>{school.name}</TableCell>
-                    <TableCell>{school.email}</TableCell>
-                    <TableCell>{school.address}</TableCell>
-                    <TableCell>{school.phoneNumber}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <TabsContent value="schools">
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>School Name</TableHead>
+                      <TableHead className="hidden md:table-cell">Email</TableHead>
+                      <TableHead>Phone</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {schools.map((school) => (
+                      <TableRow
+                        key={school.id}
+                        className="cursor-pointer hover:bg-gray-50"
+                        onClick={() => handleRowClick({
+                          ...school,
+                          donations: donations.filter(d => d.schoolId === school.id)
+                        })}
+                      >
+                        <TableCell>{school.name}</TableCell>
+                        <TableCell className="hidden md:table-cell">{school.email}</TableCell>
+                        <TableCell>{school.phoneNumber}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
           </TabsContent>
 
-          <TabsContent value="donators" className="bg-white rounded-lg shadow-lg p-6">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Total Donations</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow
-                    key={user.uid}
-                    className="cursor-pointer hover:bg-gray-50"
-                    onClick={() => handleRowClick({
-                      ...user,
-                      donations: donations.filter(d => d.userId === user.uid)
-                    })}
-                  >
-                    <TableCell>{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      {donations.filter(d => d.userId === user.uid).length}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <TabsContent value="donators">
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead className="hidden md:table-cell">Email</TableHead>
+                      <TableHead>Donations</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users.map((user) => (
+                      <TableRow
+                        key={user.uid}
+                        className="cursor-pointer hover:bg-gray-50"
+                        onClick={() => handleRowClick({
+                          ...user,
+                          donations: donations.filter(d => d.userId === user.uid)
+                        })}
+                      >
+                        <TableCell>{user.name}</TableCell>
+                        <TableCell className="hidden md:table-cell">{user.email}</TableCell>
+                        <TableCell>
+                          {donations.filter(d => d.userId === user.uid).length}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-[95vw] md:max-w-2xl max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>
                 {selectedItem?.name || selectedItem?.schoolName || "Details"}
               </DialogTitle>
             </DialogHeader>
-            <div className="mt-4">
-              {selectedItem?.donations ? (
-                // Donator details view
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="font-semibold">Name:</p>
-                      <p>{selectedItem.name}</p>
+            <ScrollArea className="max-h-[70vh]">
+              <div className="space-y-6 p-4">
+                {selectedItem?.donations ? (
+                  // Donator details view
+                  <div className="space-y-6">
+                    <div className="grid gap-4">
+                      <div>
+                        <p className="font-semibold">Name:</p>
+                        <p>{selectedItem.name}</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold">Email:</p>
+                        <p>{selectedItem.email}</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold">Phone Number:</p>
+                        <p>{selectedItem.phoneNumber || "Not provided"}</p>
+                      </div>
                     </div>
                     <div>
-                      <p className="font-semibold">Email:</p>
-                      <p>{selectedItem.email}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="font-semibold mb-2">Donation History:</p>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>School</TableHead>
-                          <TableHead>Food Item</TableHead>
-                          <TableHead>Quantity</TableHead>
-                          <TableHead>Date</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
+                      <p className="font-semibold mb-2">Donation History:</p>
+                      <div className="space-y-4">
                         {selectedItem.donations.map((donation: DetailedDonation) => (
-                          <TableRow key={donation.id}>
-                            <TableCell>{donation.schoolName}</TableCell>
-                            <TableCell>{donation.foodItemName}</TableCell>
-                            <TableCell>{donation.quantity}</TableCell>
-                            <TableCell>
-                              {new Date(donation.createdAt).toLocaleDateString()}
-                            </TableCell>
-                          </TableRow>
+                          <div key={donation.id} className="bg-gray-50 p-4 rounded-lg">
+                            <p><strong>School:</strong> {donation.schoolName}</p>
+                            <p><strong>Food Item:</strong> {donation.foodItemName}</p>
+                            <p><strong>Quantity:</strong> {donation.quantity}</p>
+                            <p><strong>Date:</strong> {new Date(donation.createdAt).toLocaleDateString()}</p>
+                            <p><strong>Note:</strong> {donation.note || "No note"}</p>
+                          </div>
                         ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              ) : (
-                // School details view
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="font-semibold">School Name:</p>
-                      <p>{selectedItem?.name}</p>
-                    </div>
-                    <div>
-                      <p className="font-semibold">Email:</p>
-                      <p>{selectedItem?.email}</p>
-                    </div>
-                    <div>
-                      <p className="font-semibold">Address:</p>
-                      <p>{selectedItem?.address}</p>
-                    </div>
-                    <div>
-                      <p className="font-semibold">Phone Number:</p>
-                      <p>{selectedItem?.phoneNumber}</p>
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <p className="font-semibold">Location:</p>
-                    <p>Latitude: {selectedItem?.location?.latitude}</p>
-                    <p>Longitude: {selectedItem?.location?.longitude}</p>
+                ) : (
+                  // School details view
+                  <div className="space-y-6">
+                    <div className="grid gap-4">
+                      <div>
+                        <p className="font-semibold">School Name:</p>
+                        <p>{selectedItem?.name}</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold">Email:</p>
+                        <p>{selectedItem?.email}</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold">Address:</p>
+                        <p>{selectedItem?.address}</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold">Phone Number:</p>
+                        <p>{selectedItem?.phoneNumber}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="font-semibold mb-2">Donation History:</p>
+                      <div className="space-y-4">
+                        {selectedItem?.donations?.map((donation: DetailedDonation) => (
+                          <div key={donation.id} className="bg-gray-50 p-4 rounded-lg">
+                            <p><strong>Donor:</strong> {donation.userName}</p>
+                            <p><strong>Food Item:</strong> {donation.foodItemName}</p>
+                            <p><strong>Quantity:</strong> {donation.quantity}</p>
+                            <p><strong>Date:</strong> {new Date(donation.createdAt).toLocaleDateString()}</p>
+                            <p><strong>Note:</strong> {donation.note || "No note"}</p>
+                          </div>
+                        ))}
+                        {(!selectedItem?.donations || selectedItem.donations.length === 0) && (
+                          <p className="text-gray-500">No donations received yet</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            </ScrollArea>
           </DialogContent>
         </Dialog>
       </div>
