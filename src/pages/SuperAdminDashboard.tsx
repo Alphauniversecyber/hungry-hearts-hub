@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { School } from "@/types/school";
+import { School, DetailedDonation } from "@/types/school";
 import MainNav from "@/components/MainNav";
 
 interface User {
@@ -27,13 +27,6 @@ interface User {
   name: string;
   email: string;
   phoneNumber?: string;
-}
-
-interface DetailedDonation extends Donation {
-  userName: string;
-  userEmail: string;
-  schoolName: string;
-  foodItemName: string;
 }
 
 const SuperAdminDashboard = () => {
@@ -95,11 +88,11 @@ const SuperAdminDashboard = () => {
             userEmail: user?.email || "Unknown Email",
             schoolName: school?.name || "Unknown School",
             foodItemName
-          };
+          } as DetailedDonation;
         });
 
         const detailedDonations = await Promise.all(donationsPromises);
-        setDonations(detailedDonations as DetailedDonation[]);
+        setDonations(detailedDonations);
       } catch (error) {
         console.error("Error fetching data:", error);
       }

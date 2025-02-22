@@ -1,3 +1,4 @@
+
 export interface School {
   id: string;
   name: string;
@@ -29,4 +30,11 @@ export interface FoodItem {
   schoolId: string;
   quantityNeeded?: number;
   currentQuantity?: number;
+}
+
+export interface DetailedDonation extends Donation {
+  userName: string;
+  userEmail: string;
+  schoolName: string;
+  foodItemName: string;
 }
