@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "@/lib/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import {
   Table,
   TableBody,
@@ -17,9 +17,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { School, DetailedDonation } from "@/types/school";
+import { School, DetailedDonation, FoodItem } from "@/types/school";
 import MainNav from "@/components/MainNav";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -67,6 +66,13 @@ const SuperAdminDashboard = () => {
         })) as User[];
         setUsers(usersData);
 
+        // First, fetch all food items to have them in memory
+        const foodItemsSnapshot = await getDocs(collection(db, "foodItems"));
+        const foodItems = foodItemsSnapshot.docs.reduce((acc, doc) => {
+          acc[doc.id] = { id: doc.id, ...doc.data() } as FoodItem;
+          return acc;
+        }, {} as { [key: string]: FoodItem });
+
         // Fetch donations with details
         const donationsSnapshot = await getDocs(collection(db, "donations"));
         const donationsPromises = donationsSnapshot.docs.map(async (doc) => {
@@ -74,13 +80,15 @@ const SuperAdminDashboard = () => {
           const user = usersData.find(u => u.uid === donationData.userId);
           const school = schoolsData.find(s => s.id === donationData.schoolId);
           
-          // Fetch food item details
-          const foodItemDoc = await getDocs(query(
-            collection(db, "foodItems"),
-            where("id", "==", donationData.foodItemId)
-          ));
-          
-          const foodItemName = foodItemDoc.docs[0]?.data()?.name || "Unknown Food Item";
+          // Get food item from our cached foodItems
+          const foodItem = foodItems[donationData.foodItemId];
+          const foodItemName = foodItem?.name || "Unknown Food Item";
+
+          console.log('Food Item Debug:', {
+            foodItemId: donationData.foodItemId,
+            foodItem,
+            foodItemName
+          });
 
           return {
             id: doc.id,
