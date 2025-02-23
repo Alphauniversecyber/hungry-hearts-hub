@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "@/lib/firebase";
@@ -116,8 +117,8 @@ const SuperAdminDashboard = () => {
   const handleEdit = () => {
     if (!selectedItem) return;
     
-    const type = selectedItem.schoolId ? "school" : "donator";
-    const id = selectedItem.schoolId ? selectedItem.id : selectedItem.uid;
+    const type = "school" in selectedItem ? "school" : "donator";
+    const id = type === "school" ? selectedItem.id : selectedItem.uid;
     
     navigate(`/super-admin-edit/${type}/${id}`);
   };
