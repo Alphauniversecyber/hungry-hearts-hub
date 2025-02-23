@@ -35,7 +35,6 @@ export const SchoolProfile = ({ school, setSchool }: SchoolProfileProps) => {
         name: updatedSchool.name,
         address: updatedSchool.address,
         phoneNumber: updatedSchool.phoneNumber,
-        location: updatedSchool.location
       });
 
       setSchool(updatedSchool);
