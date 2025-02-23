@@ -14,7 +14,15 @@ interface User {
   uid: string;
   name: string;
   email: string;
+  phone?: string;
+  phoneNumber?: string;
+}
+
+interface FormData {
+  name: string;
+  email: string;
   phoneNumber: string;
+  password: string;
 }
 
 const SuperAdminEdit = () => {
@@ -23,32 +31,54 @@ const SuperAdminEdit = () => {
   const { toast } = useToast();
   const [data, setData] = useState<School | User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
     phoneNumber: "",
-    password: "" // New password field
+    password: ""
   });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        if (!id) return;
+        if (!id) {
+          toast({
+            title: "Error",
+            description: "No ID provided",
+            variant: "destructive",
+          });
+          navigate("/super-admin-dashboard");
+          return;
+        }
+
         const docRef = doc(db, type === "school" ? "schools" : "users", id);
         const docSnap = await getDoc(docRef);
         
         if (docSnap.exists()) {
-          const data = {
+          const docData = docSnap.data();
+          const formattedData = {
             id: docSnap.id,
-            ...docSnap.data()
+            ...docData,
+            // Ensure the required properties exist
+            name: docData.name || "",
+            email: docData.email || "",
+            phoneNumber: docData.phoneNumber || docData.phone || "",
           };
-          setData(data);
+
+          setData(formattedData as School | User);
           setFormData({
-            name: data.name || "",
-            email: data.email || "",
-            phoneNumber: data.phoneNumber || data.phone || "",
+            name: formattedData.name,
+            email: formattedData.email,
+            phoneNumber: formattedData.phoneNumber,
             password: ""
           });
+        } else {
+          toast({
+            title: "Error",
+            description: "Document not found",
+            variant: "destructive",
+          });
+          navigate("/super-admin-dashboard");
         }
         setLoading(false);
       } catch (error) {
@@ -57,26 +87,45 @@ const SuperAdminEdit = () => {
           title: "Error fetching data",
           variant: "destructive",
         });
+        navigate("/super-admin-dashboard");
       }
     };
 
     fetchData();
-  }, [id, type, toast]);
+  }, [id, type, toast, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (!id || !type) return;
+      if (!id || !type || !data) return;
+
+      // Validate phone number
+      const phoneRegex = /^\d{10}$/;
+      if (!phoneRegex.test(formData.phoneNumber)) {
+        toast({
+          title: "Invalid phone number",
+          description: "Phone number must be exactly 10 digits",
+          variant: "destructive",
+        });
+        return;
+      }
 
       const collection = type === "school" ? "schools" : "users";
-      const updateData: any = {
+      const updateData: Record<string, string> = {
         name: formData.name,
         phoneNumber: formData.phoneNumber,
       };
 
       // Only include password if it was changed
       if (formData.password) {
-        // In a real app, you'd want to use proper authentication methods
+        if (formData.password.length < 6) {
+          toast({
+            title: "Invalid password",
+            description: "Password must be at least 6 characters",
+            variant: "destructive",
+          });
+          return;
+        }
         updateData.password = formData.password;
       }
 
@@ -97,7 +146,25 @@ const SuperAdminEdit = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="min-h-screen bg-gray-50">
+      <MainNav />
+      <div className="container mx-auto p-4">
+        <div className="flex items-center justify-center h-[60vh]">
+          <p className="text-lg">Loading...</p>
+        </div>
+      </div>
+    </div>;
+  }
+
+  if (!data) {
+    return <div className="min-h-screen bg-gray-50">
+      <MainNav />
+      <div className="container mx-auto p-4">
+        <div className="flex items-center justify-center h-[60vh]">
+          <p className="text-lg">No data found</p>
+        </div>
+      </div>
+    </div>;
   }
 
   return (
