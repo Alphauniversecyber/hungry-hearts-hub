@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "@/lib/firebase";
@@ -17,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { School, DetailedDonation, FoodItem } from "@/types/school";
 import MainNav from "@/components/MainNav";
@@ -26,7 +26,7 @@ interface User {
   uid: string;
   name: string;
   email: string;
-  phoneNumber: string; // Make sure phoneNumber is defined
+  phoneNumber: string;
 }
 
 const SuperAdminDashboard = () => {
@@ -50,7 +50,6 @@ const SuperAdminDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch schools
         const schoolsSnapshot = await getDocs(collection(db, "schools"));
         const schoolsData = schoolsSnapshot.docs.map(doc => ({
           id: doc.id,
@@ -58,7 +57,6 @@ const SuperAdminDashboard = () => {
         })) as School[];
         setSchools(schoolsData);
 
-        // Fetch users with phone numbers
         const usersSnapshot = await getDocs(collection(db, "users"));
         const usersData = usersSnapshot.docs.map(doc => {
           const data = doc.data();
@@ -66,22 +64,20 @@ const SuperAdminDashboard = () => {
             uid: doc.id,
             name: data.name,
             email: data.email,
-            phoneNumber: data.phone, // Match the field name from registration
+            phoneNumber: data.phone,
             ...data
           } as User;
         });
         setUsers(usersData);
         
-        console.log('Users data:', usersData); // Debug log
+        console.log('Users data:', usersData);
 
-        // First, fetch all food items
         const foodItemsSnapshot = await getDocs(collection(db, "foodItems"));
         const foodItems = foodItemsSnapshot.docs.reduce((acc, doc) => {
           acc[doc.id] = { id: doc.id, ...doc.data() } as FoodItem;
           return acc;
         }, {} as { [key: string]: FoodItem });
 
-        // Fetch donations with details
         const donationsSnapshot = await getDocs(collection(db, "donations"));
         const donationsPromises = donationsSnapshot.docs.map(async (doc) => {
           const donationData = doc.data();
@@ -96,7 +92,7 @@ const SuperAdminDashboard = () => {
             ...donationData,
             userName: user?.name || "Unknown User",
             userEmail: user?.email || "Unknown Email",
-            userPhone: user?.phoneNumber || "Not provided", // Add phone number to donation details
+            userPhone: user?.phoneNumber || "Not provided",
             schoolName: school?.name || "Unknown School",
             foodItemName
           } as DetailedDonation;
@@ -115,6 +111,15 @@ const SuperAdminDashboard = () => {
   const handleRowClick = (item: any) => {
     setSelectedItem(item);
     setIsDialogOpen(true);
+  };
+
+  const handleEdit = () => {
+    if (!selectedItem) return;
+    
+    const type = selectedItem.schoolId ? "school" : "donator";
+    const id = selectedItem.schoolId ? selectedItem.id : selectedItem.uid;
+    
+    navigate(`/super-admin-edit/${type}/${id}`);
   };
 
   return (
@@ -204,15 +209,17 @@ const SuperAdminDashboard = () => {
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-[95vw] md:max-w-2xl max-h-[90vh]">
-            <DialogHeader>
+            <DialogHeader className="flex flex-row items-center justify-between">
               <DialogTitle>
                 {selectedItem?.name || selectedItem?.schoolName || "Details"}
               </DialogTitle>
+              <Button onClick={handleEdit} className="ml-4">
+                Edit
+              </Button>
             </DialogHeader>
             <ScrollArea className="max-h-[70vh]">
               <div className="space-y-6 p-4">
                 {selectedItem?.donations ? (
-                  // Donator details view
                   <div className="space-y-6">
                     <div className="grid gap-4">
                       <div>
@@ -244,7 +251,6 @@ const SuperAdminDashboard = () => {
                     </div>
                   </div>
                 ) : (
-                  // School details view
                   <div className="space-y-6">
                     <div className="grid gap-4">
                       <div>
