@@ -10,6 +10,7 @@ import Register from "./pages/Register";
 import AdminLogin from "./pages/AdminLogin";
 import SuperAdminLogin from "./pages/SuperAdminLogin";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import SuperAdminEdit from "./pages/SuperAdminEdit";
 import AdminDashboard from "./pages/AdminDashboard";
 import Donate from "./pages/Donate";
 import History from "./pages/History";
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/super-admin-login" element={<SuperAdminLogin />} />
           <Route path="/super-admin" element={<SuperAdminDashboard />} />
+          <Route path="/super-admin-edit/:type/:id" element={<SuperAdminEdit />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/donate" element={<Donate />} />
           <Route path="/history" element={<History />} />
