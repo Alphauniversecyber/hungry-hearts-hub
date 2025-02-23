@@ -117,8 +117,13 @@ const SuperAdminDashboard = () => {
   const handleEdit = () => {
     if (!selectedItem) return;
     
-    const type = "school" in selectedItem ? "school" : "donator";
-    const id = type === "school" ? selectedItem.id : selectedItem.uid;
+    // Check if it's a school by looking for the address field which only schools have
+    const type = selectedItem.address ? "school" : "donator";
+    const id = selectedItem.id || selectedItem.uid;
+    
+    console.log("Selected item:", selectedItem); // Debug log
+    console.log("Type:", type); // Debug log
+    console.log("ID:", id); // Debug log
     
     navigate(`/super-admin-edit/${type}/${id}`);
   };
