@@ -5,10 +5,6 @@ export interface School {
   email: string;
   address: string;
   phoneNumber: string;
-  location: {
-    latitude: number;
-    longitude: number;
-  };
   totalFoodNeeded?: number;
 }
 
@@ -35,6 +31,7 @@ export interface FoodItem {
 export interface DetailedDonation extends Donation {
   userName: string;
   userEmail: string;
+  userPhone: string; // Added phone number
   schoolName: string;
   foodItemName: string;
 }

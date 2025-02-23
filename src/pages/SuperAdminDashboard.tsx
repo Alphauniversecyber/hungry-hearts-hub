@@ -26,7 +26,7 @@ interface User {
   uid: string;
   name: string;
   email: string;
-  phoneNumber?: string;
+  phoneNumber: string; // Make sure phoneNumber is defined
 }
 
 const SuperAdminDashboard = () => {
@@ -58,15 +58,23 @@ const SuperAdminDashboard = () => {
         })) as School[];
         setSchools(schoolsData);
 
-        // Fetch users
+        // Fetch users with phone numbers
         const usersSnapshot = await getDocs(collection(db, "users"));
-        const usersData = usersSnapshot.docs.map(doc => ({
-          uid: doc.id,
-          ...doc.data()
-        })) as User[];
+        const usersData = usersSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            uid: doc.id,
+            name: data.name,
+            email: data.email,
+            phoneNumber: data.phone, // Match the field name from registration
+            ...data
+          } as User;
+        });
         setUsers(usersData);
+        
+        console.log('Users data:', usersData); // Debug log
 
-        // First, fetch all food items to have them in memory
+        // First, fetch all food items
         const foodItemsSnapshot = await getDocs(collection(db, "foodItems"));
         const foodItems = foodItemsSnapshot.docs.reduce((acc, doc) => {
           acc[doc.id] = { id: doc.id, ...doc.data() } as FoodItem;
@@ -80,21 +88,15 @@ const SuperAdminDashboard = () => {
           const user = usersData.find(u => u.uid === donationData.userId);
           const school = schoolsData.find(s => s.id === donationData.schoolId);
           
-          // Get food item from our cached foodItems
           const foodItem = foodItems[donationData.foodItemId];
           const foodItemName = foodItem?.name || "Unknown Food Item";
-
-          console.log('Food Item Debug:', {
-            foodItemId: donationData.foodItemId,
-            foodItem,
-            foodItemName
-          });
 
           return {
             id: doc.id,
             ...donationData,
             userName: user?.name || "Unknown User",
             userEmail: user?.email || "Unknown Email",
+            userPhone: user?.phoneNumber || "Not provided", // Add phone number to donation details
             schoolName: school?.name || "Unknown School",
             foodItemName
           } as DetailedDonation;
