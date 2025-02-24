@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "@/lib/firebase";
@@ -22,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { School, DetailedDonation, FoodItem } from "@/types/school";
 import MainNav from "@/components/MainNav";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { FileDown } from "lucide-react";
 
 interface User {
   uid: string;
@@ -117,15 +117,65 @@ const SuperAdminDashboard = () => {
   const handleEdit = () => {
     if (!selectedItem) return;
     
-    // Check if it's a school by looking for the address field which only schools have
     const type = selectedItem.address ? "school" : "donator";
     const id = selectedItem.id || selectedItem.uid;
     
-    console.log("Selected item:", selectedItem); // Debug log
-    console.log("Type:", type); // Debug log
-    console.log("ID:", id); // Debug log
+    console.log("Selected item:", selectedItem);
+    console.log("Type:", type);
+    console.log("ID:", id);
     
     navigate(`/super-admin-edit/${type}/${id}`);
+  };
+
+  const downloadSchoolsExcel = () => {
+    const headers = ["School Name", "Email", "Phone Number", "Address", "Total Donations"];
+    const data = schools.map(school => [
+      school.name,
+      school.email,
+      school.phoneNumber,
+      school.address,
+      donations.filter(d => d.schoolId === school.id).length
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...data.map(row => row.map(cell => `"${cell}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `schools-data-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const downloadDonatorsExcel = () => {
+    const headers = ["Name", "Email", "Phone Number", "Total Donations"];
+    const data = users.map(user => [
+      user.name,
+      user.email,
+      user.phoneNumber || "Not provided",
+      donations.filter(d => d.userId === user.uid).length
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...data.map(row => row.map(cell => `"${cell}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `donators-data-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
   };
 
   return (
@@ -144,6 +194,12 @@ const SuperAdminDashboard = () => {
 
           <TabsContent value="schools">
             <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div className="p-4 flex justify-end">
+                <Button onClick={downloadSchoolsExcel} className="flex items-center gap-2">
+                  <FileDown size={18} />
+                  Download Excel
+                </Button>
+              </div>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -176,6 +232,12 @@ const SuperAdminDashboard = () => {
 
           <TabsContent value="donators">
             <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div className="p-4 flex justify-end">
+                <Button onClick={downloadDonatorsExcel} className="flex items-center gap-2">
+                  <FileDown size={18} />
+                  Download Excel
+                </Button>
+              </div>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>

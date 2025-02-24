@@ -1,4 +1,3 @@
-
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem } from "@/components/ui/navigation-menu";
 import { Link } from "react-router-dom";
 import { auth, db } from "@/lib/firebase";
@@ -8,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
-import { Menu, X, User } from "lucide-react";
+import { Menu, X, User, History, LogOut, Gift } from "lucide-react";
 
 interface School {
   id: string;
@@ -50,7 +49,6 @@ const MainNav = () => {
       localStorage.setItem("selectedSchoolName", school.name);
       localStorage.setItem("selectedSchoolAddress", school.address);
     }
-    // Dispatch custom event for school change
     window.dispatchEvent(new Event('schoolChanged'));
   };
 
@@ -82,7 +80,6 @@ const MainNav = () => {
             FeedNet
           </Link>
 
-          {/* Mobile menu button */}
           <button
             onClick={toggleMenu}
             className="md:hidden p-2 text-gray-600 hover:text-primary-600 transition-colors"
@@ -91,7 +88,6 @@ const MainNav = () => {
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
             <Select value={selectedSchool} onValueChange={handleSchoolSelect}>
               <SelectTrigger className="w-[300px] bg-white">
@@ -111,12 +107,14 @@ const MainNav = () => {
                 {user ? (
                   <>
                     <NavigationMenuItem>
-                      <Link to="/donate" className="nav-link">
+                      <Link to="/donate" className="nav-link flex items-center gap-2">
+                        <Gift size={18} className="text-gray-500" />
                         Donate
                       </Link>
                     </NavigationMenuItem>
                     <NavigationMenuItem>
-                      <Link to="/history" className="nav-link">
+                      <Link to="/history" className="nav-link flex items-center gap-2">
+                        <History size={18} className="text-gray-500" />
                         History
                       </Link>
                     </NavigationMenuItem>
@@ -130,8 +128,9 @@ const MainNav = () => {
                       <Button 
                         variant="ghost" 
                         onClick={handleLogout}
-                        className="nav-link hover:bg-gray-100"
+                        className="nav-link hover:bg-gray-100 flex items-center gap-2"
                       >
+                        <LogOut size={18} className="text-gray-500" />
                         Logout
                       </Button>
                     </NavigationMenuItem>
@@ -148,7 +147,6 @@ const MainNav = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden mt-4 space-y-4 bg-white rounded-lg p-4 shadow-lg border border-gray-100">
             <Select value={selectedSchool} onValueChange={handleSchoolSelect}>
@@ -169,16 +167,18 @@ const MainNav = () => {
                 <>
                   <Link 
                     to="/donate" 
-                    className="nav-link p-2 hover:bg-gray-50 rounded-md"
+                    className="nav-link p-2 hover:bg-gray-50 rounded-md flex items-center gap-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
+                    <Gift size={18} className="text-gray-500" />
                     Donate
                   </Link>
                   <Link 
                     to="/history" 
-                    className="nav-link p-2 hover:bg-gray-50 rounded-md"
+                    className="nav-link p-2 hover:bg-gray-50 rounded-md flex items-center gap-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
+                    <History size={18} className="text-gray-500" />
                     History
                   </Link>
                   <Link 
@@ -195,8 +195,9 @@ const MainNav = () => {
                       handleLogout();
                       setIsMenuOpen(false);
                     }}
-                    className="nav-link w-full justify-start p-2 hover:bg-gray-50"
+                    className="nav-link w-full justify-start p-2 hover:bg-gray-50 flex items-center gap-2"
                   >
+                    <LogOut size={18} className="text-gray-500" />
                     Logout
                   </Button>
                 </>
