@@ -1,6 +1,7 @@
+
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, collection, query, getDocs, updateDoc, doc } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAqSgN7R9qRo8csE7gznnP4Wlr7zIsVHrg",
@@ -15,3 +16,47 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Function to reset total food needed for all schools
+const resetTotalFoodNeeded = async () => {
+  try {
+    const schoolsRef = collection(db, 'schools');
+    const schoolsSnapshot = await getDocs(schoolsRef);
+    
+    const promises = schoolsSnapshot.docs.map(schoolDoc => {
+      return updateDoc(doc(db, 'schools', schoolDoc.id), {
+        totalFoodNeeded: 0
+      });
+    });
+
+    await Promise.all(promises);
+    console.log('Reset total food needed for all schools at:', new Date().toISOString());
+  } catch (error) {
+    console.error('Error resetting total food needed:', error);
+  }
+};
+
+// Set up daily reset at midnight
+const scheduleReset = () => {
+  const now = new Date();
+  const night = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1, // tomorrow
+    0, // hours (midnight)
+    0, // minutes
+    0  // seconds
+  );
+  
+  const msUntilMidnight = night.getTime() - now.getTime();
+  
+  // Schedule first reset
+  setTimeout(() => {
+    resetTotalFoodNeeded();
+    // Then set up daily interval
+    setInterval(resetTotalFoodNeeded, 24 * 60 * 60 * 1000);
+  }, msUntilMidnight);
+};
+
+// Start the scheduling when the app initializes
+scheduleReset();
