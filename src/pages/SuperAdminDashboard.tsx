@@ -21,7 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { School, DetailedDonation, FoodItem } from "@/types/school";
 import MainNav from "@/components/MainNav";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileDown } from "lucide-react";
+import { FileDown, Download } from "lucide-react";
 
 interface User {
   uid: string;
@@ -281,9 +281,44 @@ const SuperAdminDashboard = () => {
               <DialogTitle>
                 {selectedItem?.name || selectedItem?.schoolName || "Details"}
               </DialogTitle>
-              <Button onClick={handleEdit} className="ml-4">
-                Edit
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={handleEdit}>Edit</Button>
+                {selectedItem?.donations && selectedItem.donations.length > 0 && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      const headers = ["Date", "School Name", "Donor Name", "Food Item", "Quantity", "Note"];
+                      const data = selectedItem.donations.map((donation: DetailedDonation) => [
+                        new Date(donation.createdAt).toLocaleDateString(),
+                        donation.schoolName || selectedItem.name,
+                        donation.userName,
+                        donation.foodItemName,
+                        donation.quantity,
+                        donation.note || "No note"
+                      ]);
+
+                      const csvContent = [
+                        headers.join(","),
+                        ...data.map(row => row.map(cell => `"${cell}"`).join(","))
+                      ].join("\n");
+
+                      const blob = new Blob([csvContent], { type: "text/csv" });
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `${selectedItem.name}-donations-${new Date().toISOString().split("T")[0]}.csv`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      window.URL.revokeObjectURL(url);
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Download size={16} />
+                    Download History
+                  </Button>
+                )}
+              </div>
             </DialogHeader>
             <ScrollArea className="max-h-[70vh]">
               <div className="space-y-6 p-4">

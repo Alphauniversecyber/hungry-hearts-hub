@@ -1,14 +1,14 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { doc, updateDoc, getDoc, deleteDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc, deleteDoc, collection, getDocs, addDoc, query, where } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import MainNav from "@/components/MainNav";
-import { School } from "@/types/school";
+import { School, FoodItem } from "@/types/school";
+import { Plus, Trash } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +36,12 @@ interface FormData {
   password: string;
 }
 
+interface FoodItemForm {
+  name: string;
+  description: string;
+  quantityNeeded: number;
+}
+
 const SuperAdminEdit = () => {
   const { type, id } = useParams();
   const navigate = useNavigate();
@@ -47,6 +53,12 @@ const SuperAdminEdit = () => {
     email: "",
     phoneNumber: "",
     password: ""
+  });
+  const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
+  const [newFoodItem, setNewFoodItem] = useState<FoodItemForm>({
+    name: "",
+    description: "",
+    quantityNeeded: 0
   });
 
   useEffect(() => {
@@ -101,7 +113,20 @@ const SuperAdminEdit = () => {
       }
     };
 
+    const fetchFoodItems = async () => {
+      if (type === "school" && id) {
+        const foodItemsQuery = query(collection(db, "foodItems"), where("schoolId", "==", id));
+        const foodItemsSnapshot = await getDocs(foodItemsQuery);
+        const foodItemsList = foodItemsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as FoodItem));
+        setFoodItems(foodItemsList);
+      }
+    };
+
     fetchData();
+    fetchFoodItems();
   }, [id, type, toast, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -168,6 +193,52 @@ const SuperAdminEdit = () => {
     } catch (error: any) {
       toast({
         title: "Error deleting",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddFoodItem = async () => {
+    try {
+      if (!id || !newFoodItem.name) return;
+
+      const foodItemData = {
+        ...newFoodItem,
+        schoolId: id,
+      };
+
+      const docRef = await addDoc(collection(db, "foodItems"), foodItemData);
+      setFoodItems([...foodItems, { id: docRef.id, ...foodItemData }]);
+      
+      setNewFoodItem({
+        name: "",
+        description: "",
+        quantityNeeded: 0
+      });
+
+      toast({
+        title: "Food item added successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error adding food item",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteFoodItem = async (foodItemId: string) => {
+    try {
+      await deleteDoc(doc(db, "foodItems", foodItemId));
+      setFoodItems(foodItems.filter(item => item.id !== foodItemId));
+      toast({
+        title: "Food item deleted successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error deleting food item",
         description: error.message,
         variant: "destructive",
       });
@@ -280,6 +351,68 @@ const SuperAdminEdit = () => {
               </AlertDialog>
             </div>
           </form>
+
+          {type === "school" && (
+            <div className="mt-8 bg-white p-6 rounded-lg shadow">
+              <h2 className="text-xl font-semibold mb-4">Food Items</h2>
+              
+              <div className="space-y-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Name</Label>
+                    <Input
+                      value={newFoodItem.name}
+                      onChange={(e) => setNewFoodItem(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Food item name"
+                    />
+                  </div>
+                  <div>
+                    <Label>Description</Label>
+                    <Input
+                      value={newFoodItem.description}
+                      onChange={(e) => setNewFoodItem(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Description"
+                    />
+                  </div>
+                  <div>
+                    <Label>Quantity Needed</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={newFoodItem.quantityNeeded}
+                      onChange={(e) => setNewFoodItem(prev => ({ 
+                        ...prev, 
+                        quantityNeeded: parseInt(e.target.value) || 0 
+                      }))}
+                    />
+                  </div>
+                </div>
+                <Button onClick={handleAddFoodItem} className="flex items-center gap-2">
+                  <Plus size={16} />
+                  Add Food Item
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                {foodItems.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <p className="font-medium">{item.name}</p>
+                      <p className="text-sm text-gray-600">{item.description}</p>
+                      <p className="text-sm text-gray-600">Quantity Needed: {item.quantityNeeded}</p>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => handleDeleteFoodItem(item.id)}
+                    >
+                      <Trash size={16} />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
