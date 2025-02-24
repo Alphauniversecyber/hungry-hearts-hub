@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc, deleteDoc } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,17 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import MainNav from "@/components/MainNav";
 import { School } from "@/types/school";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface User {
   uid: string;
@@ -47,7 +58,7 @@ const SuperAdminEdit = () => {
             description: "No ID provided",
             variant: "destructive",
           });
-          navigate("/super-admin-dashboard");
+          navigate("/super-admin");
           return;
         }
 
@@ -59,7 +70,6 @@ const SuperAdminEdit = () => {
           const formattedData = {
             id: docSnap.id,
             ...docData,
-            // Ensure the required properties exist
             name: docData.name || "",
             email: docData.email || "",
             phoneNumber: docData.phoneNumber || docData.phone || "",
@@ -78,7 +88,7 @@ const SuperAdminEdit = () => {
             description: "Document not found",
             variant: "destructive",
           });
-          navigate("/super-admin-dashboard");
+          navigate("/super-admin");
         }
         setLoading(false);
       } catch (error) {
@@ -87,7 +97,7 @@ const SuperAdminEdit = () => {
           title: "Error fetching data",
           variant: "destructive",
         });
-        navigate("/super-admin-dashboard");
+        navigate("/super-admin");
       }
     };
 
@@ -99,7 +109,6 @@ const SuperAdminEdit = () => {
     try {
       if (!id || !type || !data) return;
 
-      // Validate phone number
       const phoneRegex = /^\d{10}$/;
       if (!phoneRegex.test(formData.phoneNumber)) {
         toast({
@@ -116,7 +125,6 @@ const SuperAdminEdit = () => {
         phoneNumber: formData.phoneNumber,
       };
 
-      // Only include password if it was changed
       if (formData.password) {
         if (formData.password.length < 6) {
           toast({
@@ -135,10 +143,31 @@ const SuperAdminEdit = () => {
         title: "Updated successfully",
       });
 
-      navigate("/super-admin-dashboard");
+      navigate("/super-admin");
     } catch (error: any) {
       toast({
         title: "Error updating",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      if (!id || !type) return;
+
+      const collection = type === "school" ? "schools" : "users";
+      await deleteDoc(doc(db, collection, id));
+
+      toast({
+        title: "Deleted successfully",
+      });
+
+      navigate("/super-admin");
+    } catch (error: any) {
+      toast({
+        title: "Error deleting",
         description: error.message,
         variant: "destructive",
       });
@@ -176,7 +205,7 @@ const SuperAdminEdit = () => {
             <h1 className="text-2xl font-semibold">
               Edit {type === "school" ? "School" : "Donator"}
             </h1>
-            <Button variant="outline" onClick={() => navigate("/super-admin-dashboard")}>
+            <Button variant="outline" onClick={() => navigate("/super-admin")}>
               Back
             </Button>
           </div>
@@ -226,9 +255,29 @@ const SuperAdminEdit = () => {
 
             <div className="flex gap-4">
               <Button type="submit">Save Changes</Button>
-              <Button type="button" variant="outline" onClick={() => navigate("/super-admin-dashboard")}>
+              <Button type="button" variant="outline" onClick={() => navigate("/super-admin")}>
                 Cancel
               </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button type="button" variant="destructive">Delete Account</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the account
+                      and remove all associated data.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </form>
         </div>
