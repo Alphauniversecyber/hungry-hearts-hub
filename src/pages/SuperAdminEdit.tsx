@@ -39,7 +39,6 @@ interface FormData {
 interface FoodItemForm {
   name: string;
   description: string;
-  quantityNeeded: number;
 }
 
 const SuperAdminEdit = () => {
@@ -57,9 +56,9 @@ const SuperAdminEdit = () => {
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
   const [newFoodItem, setNewFoodItem] = useState<FoodItemForm>({
     name: "",
-    description: "",
-    quantityNeeded: 0
+    description: ""
   });
+  const [totalFoodNeeded, setTotalFoodNeeded] = useState<number>(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -85,6 +84,7 @@ const SuperAdminEdit = () => {
             name: docData.name || "",
             email: docData.email || "",
             phoneNumber: docData.phoneNumber || docData.phone || "",
+            totalFoodNeeded: docData.totalFoodNeeded || 0
           };
 
           setData(formattedData as School | User);
@@ -94,6 +94,7 @@ const SuperAdminEdit = () => {
             phoneNumber: formattedData.phoneNumber,
             password: ""
           });
+          setTotalFoodNeeded(formattedData.totalFoodNeeded || 0);
         } else {
           toast({
             title: "Error",
@@ -145,10 +146,14 @@ const SuperAdminEdit = () => {
       }
 
       const collection = type === "school" ? "schools" : "users";
-      const updateData: Record<string, string> = {
+      const updateData: Record<string, any> = {
         name: formData.name,
         phoneNumber: formData.phoneNumber,
       };
+
+      if (type === "school") {
+        updateData.totalFoodNeeded = totalFoodNeeded;
+      }
 
       if (formData.password) {
         if (formData.password.length < 6) {
@@ -213,8 +218,7 @@ const SuperAdminEdit = () => {
       
       setNewFoodItem({
         name: "",
-        description: "",
-        quantityNeeded: 0
+        description: ""
       });
 
       toast({
@@ -313,6 +317,19 @@ const SuperAdminEdit = () => {
                 />
               </div>
 
+              {type === "school" && (
+                <div>
+                  <Label>Total Food Needed</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={totalFoodNeeded}
+                    onChange={(e) => setTotalFoodNeeded(parseInt(e.target.value) || 0)}
+                    required
+                  />
+                </div>
+              )}
+
               <div>
                 <Label>New Password (leave empty to keep current)</Label>
                 <Input
@@ -357,7 +374,7 @@ const SuperAdminEdit = () => {
               <h2 className="text-xl font-semibold mb-4">Food Items</h2>
               
               <div className="space-y-4 mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label>Name</Label>
                     <Input
@@ -374,18 +391,6 @@ const SuperAdminEdit = () => {
                       placeholder="Description"
                     />
                   </div>
-                  <div>
-                    <Label>Quantity Needed</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={newFoodItem.quantityNeeded}
-                      onChange={(e) => setNewFoodItem(prev => ({ 
-                        ...prev, 
-                        quantityNeeded: parseInt(e.target.value) || 0 
-                      }))}
-                    />
-                  </div>
                 </div>
                 <Button onClick={handleAddFoodItem} className="flex items-center gap-2">
                   <Plus size={16} />
@@ -399,7 +404,6 @@ const SuperAdminEdit = () => {
                     <div>
                       <p className="font-medium">{item.name}</p>
                       <p className="text-sm text-gray-600">{item.description}</p>
-                      <p className="text-sm text-gray-600">Quantity Needed: {item.quantityNeeded}</p>
                     </div>
                     <Button
                       variant="destructive"
