@@ -22,7 +22,8 @@ export default {
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
         heading: ["Poppins", "sans-serif"],
-        display: ["Playfair Display", "serif"]
+        display: ["Playfair Display", "serif"],
+        oswald: ["Oswald", "sans-serif"]
       },
       colors: {
         border: "hsl(var(--border))",
