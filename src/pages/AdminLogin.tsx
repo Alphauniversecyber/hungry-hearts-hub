@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import MainNav from "@/components/MainNav";
 import { Link } from "react-router-dom";
+import { Loader } from "lucide-react";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -90,8 +91,19 @@ const AdminLogin = () => {
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
       <MainNav />
       <div className="flex items-center justify-center p-8">
-        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-          <h2 className="text-3xl font-heading font-bold text-gray-900 mb-6 text-center">
+        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md relative overflow-hidden">
+          {isLoading && (
+            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50">
+              <div className="flex flex-col items-center gap-3">
+                <Loader className="h-8 w-8 text-primary animate-spin" />
+                <p className="text-primary font-oswald text-lg animate-pulse">
+                  Logging in...
+                </p>
+              </div>
+            </div>
+          )}
+          
+          <h2 className="text-3xl font-oswald font-bold text-gray-900 mb-6 text-center">
             School Login
           </h2>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -103,7 +115,7 @@ const AdminLogin = () => {
                 onChange={(e) => setEmail(e.target.value.trim())}
                 required
                 disabled={isLoading}
-                className="w-full"
+                className="w-full font-oswald"
               />
             </div>
             <div>
@@ -114,24 +126,24 @@ const AdminLogin = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
-                className="w-full"
+                className="w-full font-oswald"
               />
             </div>
             <Button 
               type="submit" 
-              className="w-full bg-primary hover:bg-primary/90"
+              className="w-full bg-primary hover:bg-primary/90 font-oswald text-lg"
               disabled={isLoading}
             >
               {isLoading ? "Logging in..." : "Login"}
             </Button>
             <div className="space-y-2 text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 font-oswald">
                 Don't have a school account?{" "}
                 <Link to="/school-register" className="text-primary hover:underline">
                   Register your school
                 </Link>
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 font-oswald">
                 <Link to="/super-admin-login" className="text-primary hover:underline">
                   Super Admin Login
                 </Link>
