@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "@/lib/firebase";
-import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import {
   Table,
   TableBody,
@@ -19,9 +19,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { School, DetailedDonation, FoodItem } from "@/types/school";
-import MainNav from "@/components/MainNav";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileDown, Download } from "lucide-react";
+import { FileDown, Download, User, Users, School as SchoolIcon, LogOut } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface User {
   uid: string;
@@ -37,6 +37,7 @@ const SuperAdminDashboard = () => {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const navigate = useNavigate();
+  const toast = useToast();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -178,18 +179,43 @@ const SuperAdminDashboard = () => {
     window.URL.revokeObjectURL(url);
   };
 
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      toast({
+        title: "Logged out successfully",
+      });
+      navigate("/super-admin-login");
+    } catch (error: any) {
+      toast({
+        title: "Error logging out",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <MainNav />
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl md:text-3xl font-heading font-bold text-gray-900 mb-4">
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="container mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">
           Super Admin Dashboard
         </h1>
 
-        <Tabs defaultValue="schools" className="space-y-4">
-          <TabsList className="w-full flex">
-            <TabsTrigger value="schools" className="flex-1">Schools</TabsTrigger>
-            <TabsTrigger value="donators" className="flex-1">Donators</TabsTrigger>
+        <Tabs defaultValue="schools" className="space-y-6">
+          <TabsList className="w-full flex justify-start border-b">
+            <TabsTrigger value="schools" className="flex items-center gap-2">
+              <SchoolIcon size={18} />
+              Schools
+            </TabsTrigger>
+            <TabsTrigger value="donators" className="flex items-center gap-2">
+              <Users size={18} />
+              Donators
+            </TabsTrigger>
+            <TabsTrigger value="profile" className="flex items-center gap-2">
+              <User size={18} />
+              Profile
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="schools">
@@ -270,6 +296,30 @@ const SuperAdminDashboard = () => {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="profile">
+            <div className="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
+              <div className="space-y-6">
+                <div className="flex items-center space-x-4">
+                  <div className="bg-gray-100 p-4 rounded-full">
+                    <User size={24} className="text-gray-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">Super Admin</h2>
+                    <p className="text-gray-600">{auth.currentUser?.email}</p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={handleLogout}
+                  variant="destructive"
+                  className="w-full flex items-center justify-center gap-2"
+                >
+                  <LogOut size={18} />
+                  Logout
+                </Button>
               </div>
             </div>
           </TabsContent>
