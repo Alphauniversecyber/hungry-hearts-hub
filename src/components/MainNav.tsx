@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
-import { Menu, X, User, History, LogOut, Gift } from "lucide-react";
+import { Menu, X, User, History, LogOut, Gift, LogIn } from "lucide-react";
 
 interface School {
   id: string;
@@ -137,7 +137,8 @@ const MainNav = () => {
                   </>
                 ) : (
                   <NavigationMenuItem>
-                    <Link to="/login" className="nav-link">
+                    <Link to="/login" className="nav-link flex items-center gap-2">
+                      <LogIn size={18} className="text-gray-500" />
                       Sign In
                     </Link>
                   </NavigationMenuItem>
@@ -204,9 +205,10 @@ const MainNav = () => {
               ) : (
                 <Link 
                   to="/login" 
-                  className="nav-link p-2 hover:bg-gray-50 rounded-md"
+                  className="nav-link p-2 hover:bg-gray-50 rounded-md flex items-center gap-2"
                   onClick={() => setIsMenuOpen(false)}
                 >
+                  <LogIn size={18} className="text-gray-500" />
                   Sign In
                 </Link>
               )}
