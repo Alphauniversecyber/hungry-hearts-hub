@@ -68,9 +68,12 @@ const SuperAdminLogin = () => {
       <MainNav />
       <div className="flex items-center justify-center p-8">
         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-          <h2 className="text-3xl font-heading font-bold text-gray-900 mb-6 text-center">
-            Super Admin Login
+          <h2 className="text-3xl font-sigmar text-primary mb-2 text-center">
+            FeedNet
           </h2>
+          <h3 className="text-xl font-oswald text-gray-600 mb-6 text-center">
+            Super Admin Login
+          </h3>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <Input
@@ -80,7 +83,7 @@ const SuperAdminLogin = () => {
                 onChange={(e) => setEmail(e.target.value.trim())}
                 required
                 disabled={isLoading}
-                className="w-full"
+                className="w-full text-sm sm:text-base"
               />
             </div>
             <div>
@@ -91,12 +94,12 @@ const SuperAdminLogin = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
-                className="w-full"
+                className="w-full text-sm sm:text-base"
               />
             </div>
             <Button 
               type="submit" 
-              className="w-full bg-primary hover:bg-primary/90"
+              className="w-full bg-primary hover:bg-primary/90 text-sm sm:text-base font-oswald"
               disabled={isLoading}
             >
               {isLoading ? "Logging in..." : "Login"}

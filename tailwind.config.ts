@@ -23,7 +23,8 @@ export default {
         sans: ["Inter", "system-ui", "sans-serif"],
         heading: ["Poppins", "sans-serif"],
         display: ["Playfair Display", "serif"],
-        oswald: ["Oswald", "sans-serif"]
+        oswald: ["Oswald", "sans-serif"],
+        sigmar: ["Sigmar", "cursive"]
       },
       colors: {
         border: "hsl(var(--border))",
