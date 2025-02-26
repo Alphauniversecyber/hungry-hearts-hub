@@ -58,7 +58,6 @@ export const DonationForm = ({
         }
       }
 
-      // Create donation
       await addDoc(collection(db, "donations"), {
         userId: user.uid,
         foodItemId: selectedFood,
@@ -69,7 +68,6 @@ export const DonationForm = ({
         createdAt: new Date().toISOString()
       });
 
-      // Update school's total food needed
       if (school?.totalFoodNeeded !== undefined) {
         const newTotal = Math.max(0, school.totalFoodNeeded - quantityNum);
         await updateDoc(doc(db, "schools", selectedSchoolId), {
@@ -98,13 +96,13 @@ export const DonationForm = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 mt-6">
       <div>
         <label className="block text-sm font-medium mb-1">Food Item</label>
         <select
           value={selectedFood}
           onChange={(e) => setSelectedFood(e.target.value)}
-          className="w-full rounded-md border border-input bg-background px-3 py-2"
+          className="w-full rounded-md border border-input bg-background px-3 py-2 font-oswald"
           required
           disabled={isLoading}
         >
@@ -128,6 +126,7 @@ export const DonationForm = ({
           min="1"
           max={school?.totalFoodNeeded}
           disabled={isLoading}
+          className="font-oswald"
         />
       </div>
 
@@ -139,14 +138,14 @@ export const DonationForm = ({
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="Any special instructions or notes"
-          className="min-h-[100px]"
+          className="min-h-[100px] font-oswald"
           disabled={isLoading}
         />
       </div>
 
       <Button 
         type="submit" 
-        className="w-full"
+        className="w-full font-oswald text-base sm:text-lg"
         disabled={isLoading}
       >
         {isLoading ? "Submitting..." : "Submit Donation"}

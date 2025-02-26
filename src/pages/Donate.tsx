@@ -8,6 +8,7 @@ import MainNav from "@/components/MainNav";
 import { School } from "@/types/school";
 import { SchoolInfo } from "@/components/donate/SchoolInfo";
 import { DonationForm } from "@/components/donate/DonationForm";
+import { Loading } from "@/components/ui/loading";
 
 interface FoodItem {
   id: string;
@@ -18,7 +19,8 @@ interface FoodItem {
 
 const Donate = () => {
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [school, setSchool] = useState<School | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -76,6 +78,8 @@ const Donate = () => {
           description: "Please try again later",
           variant: "destructive",
         });
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -96,25 +100,32 @@ const Donate = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
       <MainNav />
-      <div className="p-8">
+      <div className="p-4 sm:p-6 md:p-8">
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-3xl font-bold text-center mb-8">Donate Food</h1>
-          <div className="bg-white p-6 rounded-lg shadow">
-            {school && (
-              <SchoolInfo 
-                school={school} 
-                isAcceptingDonations={isAcceptingDonations} 
-              />
-            )}
+          <h1 className="text-2xl md:text-3xl font-bold text-center mb-6 md:mb-8 font-oswald">
+            Donate Food
+          </h1>
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow relative">
+            {isLoading && <Loading message="Loading school information..." />}
+            {isSubmitting && <Loading message="Submitting donation..." />}
             
-            {isAcceptingDonations && (
-              <DonationForm
-                foodItems={foodItems}
-                school={school}
-                setSchool={setSchool}
-                isLoading={isLoading}
-                setIsLoading={setIsLoading}
-              />
+            {!isLoading && school && (
+              <>
+                <SchoolInfo 
+                  school={school} 
+                  isAcceptingDonations={isAcceptingDonations} 
+                />
+                
+                {isAcceptingDonations && (
+                  <DonationForm
+                    foodItems={foodItems}
+                    school={school}
+                    setSchool={setSchool}
+                    isLoading={isSubmitting}
+                    setIsLoading={setIsSubmitting}
+                  />
+                )}
+              </>
             )}
           </div>
         </div>
