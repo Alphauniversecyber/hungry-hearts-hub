@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { FoodItem } from "@/types/school";
+import { Edit, Trash } from "lucide-react";
 
 interface FoodItemsTableProps {
   schoolId: string;
@@ -38,45 +39,51 @@ export const FoodItemsTable = ({ schoolId, foodItems, setFoodItems, onEdit }: Fo
   };
 
   return (
-    <div className="mt-6">
-      <h3 className="text-lg font-semibold mb-3">Food Items List</h3>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Current Quantity</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {foodItems.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell>{item.name}</TableCell>
-              <TableCell>{item.description || "N/A"}</TableCell>
-              <TableCell>{item.currentQuantity || 0}</TableCell>
-              <TableCell>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onEdit(item)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleDeleteFoodItem(item.id)}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </TableCell>
+    <div className="mt-6 overflow-x-auto">
+      <h3 className="text-lg font-semibold mb-3 font-oswald">Food Items List</h3>
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="font-oswald">Name</TableHead>
+              <TableHead className="font-oswald hidden sm:table-cell">Description</TableHead>
+              <TableHead className="font-oswald">Quantity</TableHead>
+              <TableHead className="font-oswald">Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {foodItems.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell className="font-medium font-oswald">{item.name}</TableCell>
+                <TableCell className="hidden sm:table-cell font-oswald">{item.description || "N/A"}</TableCell>
+                <TableCell className="font-oswald">{item.currentQuantity || 0}</TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onEdit(item)}
+                      className="p-2"
+                    >
+                      <Edit className="h-4 w-4" />
+                      <span className="sr-only">Edit</span>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDeleteFoodItem(item.id)}
+                      className="p-2"
+                    >
+                      <Trash className="h-4 w-4" />
+                      <span className="sr-only">Delete</span>
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };

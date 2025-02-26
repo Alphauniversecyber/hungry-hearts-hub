@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -11,6 +11,8 @@ import { TodaysDonations } from "@/components/dashboard/TodaysDonations";
 import { FoodItems } from "@/components/dashboard/FoodItems";
 import { SchoolProfile } from "@/components/dashboard/SchoolProfile";
 import { DonationHistory } from "@/components/dashboard/DonationHistory";
+import { Loading } from "@/components/ui/loading";
+import { LogOut } from "lucide-react";
 
 const AdminDashboard = () => {
   const [school, setSchool] = useState<School | null>(null);
@@ -135,64 +137,89 @@ const AdminDashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Loading...</p>
-      </div>
-    );
+    return <Loading message="Loading dashboard..." />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white p-8">
+    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white p-4 sm:p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">School Dashboard</h1>
-          <Button onClick={handleLogout} variant="outline">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold font-oswald">School Dashboard</h1>
+          <Button 
+            onClick={handleLogout} 
+            variant="outline"
+            className="w-full sm:w-auto flex items-center gap-2"
+          >
+            <LogOut className="h-4 w-4" />
             Logout
           </Button>
         </div>
 
         <Tabs defaultValue="todays-donations" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="todays-donations">Today's Donations</TabsTrigger>
-            <TabsTrigger value="food-items">Food Items</TabsTrigger>
-            <TabsTrigger value="history">Donation History</TabsTrigger>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-          </TabsList>
+          <div className="bg-white rounded-lg shadow-sm p-2">
+            <TabsList className="w-full flex flex-wrap justify-start gap-2">
+              <TabsTrigger 
+                value="todays-donations"
+                className="flex-1 sm:flex-none text-sm sm:text-base font-oswald"
+              >
+                Today's Donations
+              </TabsTrigger>
+              <TabsTrigger 
+                value="food-items"
+                className="flex-1 sm:flex-none text-sm sm:text-base font-oswald"
+              >
+                Food Items
+              </TabsTrigger>
+              <TabsTrigger 
+                value="history"
+                className="flex-1 sm:flex-none text-sm sm:text-base font-oswald"
+              >
+                Donation History
+              </TabsTrigger>
+              <TabsTrigger 
+                value="profile"
+                className="flex-1 sm:flex-none text-sm sm:text-base font-oswald"
+              >
+                Profile
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-          <TabsContent value="todays-donations">
-            <TodaysDonations donations={donations} foodItems={foodItems} />
-          </TabsContent>
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+            <TabsContent value="todays-donations" className="mt-0">
+              <TodaysDonations donations={donations} foodItems={foodItems} />
+            </TabsContent>
 
-          <TabsContent value="food-items">
-            {school && (
-              <FoodItems
-                schoolId={school.id}
-                foodItems={foodItems}
-                setFoodItems={setFoodItems}
-                school={school}
-                setSchool={setSchool}
-              />
-            )}
-          </TabsContent>
+            <TabsContent value="food-items" className="mt-0">
+              {school && (
+                <FoodItems
+                  schoolId={school.id}
+                  foodItems={foodItems}
+                  setFoodItems={setFoodItems}
+                  school={school}
+                  setSchool={setSchool}
+                />
+              )}
+            </TabsContent>
 
-          <TabsContent value="history">
-            {school && (
-              <DonationHistory
-                schoolId={school.id}
-                foodItems={foodItems}
-              />
-            )}
-          </TabsContent>
+            <TabsContent value="history" className="mt-0">
+              {school && (
+                <DonationHistory
+                  schoolId={school.id}
+                  foodItems={foodItems}
+                />
+              )}
+            </TabsContent>
 
-          <TabsContent value="profile">
-            {school && (
-              <SchoolProfile
-                school={school}
-                setSchool={setSchool}
-              />
-            )}
-          </TabsContent>
+            <TabsContent value="profile" className="mt-0">
+              {school && (
+                <SchoolProfile
+                  school={school}
+                  setSchool={setSchool}
+                />
+              )}
+            </TabsContent>
+          </div>
         </Tabs>
       </div>
     </div>
