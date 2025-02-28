@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import MainNav from "@/components/MainNav";
 import { auth } from "@/lib/firebase";
 import { useEffect, useState } from "react";
-import { ArrowRight, Heart } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -28,58 +27,38 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-orange-50">
+    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
       <MainNav />
       
-      <div className="container mx-auto px-4 py-16 md:py-24">
-        <div className="flex flex-col items-center text-center max-w-4xl mx-auto space-y-8">
-          <h1 className="font-sigmar text-4xl md:text-6xl lg:text-7xl bg-gradient-to-r from-primary-600 to-secondary bg-clip-text text-transparent animate-fade-in">
-            FeedNet
+      <div className="container mx-auto px-4 py-16">
+        <div className="text-center max-w-3xl mx-auto space-y-8">
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+            Nourishing Future Leaders
           </h1>
           
-          <h2 className="font-oswald text-2xl md:text-4xl text-gray-800 max-w-2xl leading-tight">
-            Nourishing Future Leaders, One Meal at a Time
-          </h2>
-          
-          <p className="text-lg md:text-xl text-gray-600 max-w-2xl leading-relaxed font-light">
+          <p className="text-xl text-gray-600 mb-8">
             Join our mission to ensure no student goes hungry. Together, we can make
-            a lasting difference in our school community.
+            a difference in our school community.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md mt-8">
+          <div className="max-w-sm mx-auto space-y-4">
             <Button
               onClick={handleDonate}
-              className="h-12 text-lg font-oswald bg-primary hover:bg-primary-600 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+              className="w-full bg-primary hover:bg-primary/90"
+              size="lg"
             >
-              Donate Now
-              <Heart className="h-5 w-5" />
+              Donate Food
             </Button>
 
             {!isLoggedIn && (
               <Button
                 onClick={() => navigate("/login")}
                 variant="outline"
-                className="h-12 text-lg font-oswald hover:bg-primary/5 border-2 flex items-center justify-center gap-2"
+                className="w-full"
               >
                 Sign In
-                <ArrowRight className="h-5 w-5" />
               </Button>
             )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-16">
-            <div className="bg-white/50 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 border border-primary/10">
-              <h3 className="font-oswald text-xl text-primary-700 mb-2">Easy Donation</h3>
-              <p className="text-gray-600">Simple and straightforward process to contribute food items</p>
-            </div>
-            <div className="bg-white/50 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 border border-primary/10">
-              <h3 className="font-oswald text-xl text-primary-700 mb-2">Direct Impact</h3>
-              <p className="text-gray-600">Your donations directly help students in need</p>
-            </div>
-            <div className="bg-white/50 backdrop-blur-sm p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 border border-primary/10">
-              <h3 className="font-oswald text-xl text-primary-700 mb-2">Community Support</h3>
-              <p className="text-gray-600">Building stronger communities through collective action</p>
-            </div>
           </div>
         </div>
       </div>
