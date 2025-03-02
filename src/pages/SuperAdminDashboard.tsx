@@ -35,12 +35,12 @@ const SuperAdminDashboard = () => {
         // Fetch donators (users with role donor)
         const usersCollection = collection(db, "users");
         const usersSnapshot = await getDocs(usersCollection);
-        const donatorsList = usersSnapshot.docs
-          .map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }))
-          .filter(user => user.role === "donor") as User[];
+        const usersList = usersSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as User[];
+        
+        const donatorsList = usersList.filter(user => user.role === "donor");
         setDonators(donatorsList);
       } catch (error: any) {
         toast({
