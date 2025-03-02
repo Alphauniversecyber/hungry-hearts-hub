@@ -21,27 +21,92 @@ const SchoolRegister = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validateForm = () => {
+    if (!schoolName.trim()) {
+      toast({
+        title: "Invalid school name",
+        description: "Please enter your school name",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!validateEmail(email)) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Invalid password",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!address.trim()) {
+      toast({
+        title: "Invalid address",
+        description: "Please enter your school address",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!phoneNumber.trim()) {
+      toast({
+        title: "Invalid phone number",
+        description: "Please enter your phone number",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const checkSchoolExists = async (email: string) => {
-    const schoolsRef = collection(db, "schools");
-    const q = query(schoolsRef, where("email", "==", email));
-    const querySnapshot = await getDocs(q);
-    return !querySnapshot.empty;
+    try {
+      const schoolsRef = collection(db, "schools");
+      const q = query(schoolsRef, where("email", "==", email));
+      const querySnapshot = await getDocs(q);
+      return !querySnapshot.empty;
+    } catch (error) {
+      console.error("Error checking if school exists:", error);
+      return false;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
       // First check if school already exists
       const schoolExists = await checkSchoolExists(email);
       if (schoolExists) {
-        throw new Error("A school with this email already exists");
-      }
-
-      // Validate password
-      if (password.length < 6) {
-        throw new Error("Password must be at least 6 characters long");
+        toast({
+          title: "Registration failed",
+          description: "A school with this email already exists",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
       }
 
       // Create user account with email and password
@@ -70,7 +135,8 @@ const SchoolRegister = () => {
         phone: phoneNumber,
         role: "school_admin",
         createdAt: new Date().toISOString(),
-        schoolId: schoolRef.id
+        schoolId: schoolRef.id,
+        uid: user.uid
       });
 
       toast({
@@ -90,18 +156,6 @@ const SchoolRegister = () => {
         errorMessage = "Email/password accounts are not enabled. Please contact support.";
       } else if (error.code === "auth/weak-password") {
         errorMessage = "Password should be at least 6 characters long";
-      } else if (error.code === "auth/unauthorized-domain") {
-        errorMessage = "This domain is not authorized for Firebase Authentication. Please contact support.";
-      } else if (error.code === "auth/missing-android-pkg-name") {
-        errorMessage = "Missing Android package name. Please contact support.";
-      } else if (error.code === "auth/missing-continue-uri") {
-        errorMessage = "Missing continue URL. Please contact support.";
-      } else if (error.code === "auth/missing-ios-bundle-id") {
-        errorMessage = "Missing iOS bundle ID. Please contact support.";
-      } else if (error.code === "auth/invalid-continue-uri") {
-        errorMessage = "Invalid continue URL. Please contact support.";
-      } else if (error.code === "auth/unauthorized-continue-uri") {
-        errorMessage = "The domain of the continue URL is not whitelisted. Please contact support.";
       } else if (error.message) {
         errorMessage = error.message;
       }
@@ -144,7 +198,7 @@ const SchoolRegister = () => {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value.trim())}
                   placeholder="Enter school email"
                   required
                   disabled={isLoading}

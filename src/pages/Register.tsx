@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import MainNav from "@/components/MainNav";
+import { Label } from "@/components/ui/label";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -76,6 +77,7 @@ const Register = () => {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
 
+      // Fix: Create user document with proper fields
       const userData = {
         name,
         email,
@@ -92,7 +94,7 @@ const Register = () => {
         description: "Welcome to FeedNet!",
       });
       
-      navigate("/donate");
+      navigate("/login"); // Fix: Navigate to login instead of donate
     } catch (error: any) {
       let errorMessage = "An error occurred during registration";
       
@@ -126,7 +128,9 @@ const Register = () => {
           </h2>
           <form onSubmit={handleRegister} className="space-y-4">
             <div>
+              <Label htmlFor="name">Full Name</Label>
               <Input
+                id="name"
                 type="text"
                 placeholder="Full Name"
                 value={name}
@@ -136,7 +140,9 @@ const Register = () => {
               />
             </div>
             <div>
+              <Label htmlFor="email">Email</Label>
               <Input
+                id="email"
                 type="email"
                 placeholder="Email"
                 value={email}
@@ -146,7 +152,9 @@ const Register = () => {
               />
             </div>
             <div>
+              <Label htmlFor="password">Password</Label>
               <Input
+                id="password"
                 type="password"
                 placeholder="Password"
                 value={password}
@@ -157,7 +165,9 @@ const Register = () => {
               />
             </div>
             <div>
+              <Label htmlFor="phone">Phone Number</Label>
               <Input
+                id="phone"
                 type="tel"
                 placeholder="Phone Number"
                 value={phone}
