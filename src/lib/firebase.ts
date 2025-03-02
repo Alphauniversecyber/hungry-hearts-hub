@@ -1,7 +1,7 @@
 
 import { initializeApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, query, getDocs, updateDoc, doc, setDoc } from 'firebase/firestore';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import { getFirestore, collection, query, getDocs, updateDoc, doc, setDoc, where } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAqSgN7R9qRo8csE7gznnP4Wlr7zIsVHrg",
@@ -17,24 +17,70 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// Helper function to check if user is authenticated before accessing Firestore
+// Enhanced helper function to check if user is authenticated and has admin rights
 export const fetchWithAuth = async (callback) => {
   return new Promise((resolve, reject) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       unsubscribe();
       if (user) {
         try {
-          const result = await callback();
-          resolve(result);
+          // Check if user has admin role by fetching their user document
+          const usersRef = collection(db, 'users');
+          const q = query(usersRef, where("uid", "==", user.uid));
+          const userSnapshot = await getDocs(q);
+          
+          let isAuthorized = false;
+          
+          if (!userSnapshot.empty) {
+            const userData = userSnapshot.docs[0].data();
+            // Check if user is a superadmin
+            if (userData.role === 'superadmin') {
+              isAuthorized = true;
+            }
+          }
+          
+          if (isAuthorized) {
+            const result = await callback();
+            resolve(result);
+          } else {
+            console.error("User not authorized as superadmin");
+            reject(new Error("User not authorized as superadmin"));
+          }
         } catch (error) {
           console.error("Error in fetchWithAuth:", error);
           reject(error);
         }
       } else {
+        console.error("User not authenticated");
         reject(new Error("User not authenticated"));
       }
     });
   });
+};
+
+// Helper function to authenticate super admin
+export const authenticateSuperAdmin = async (email, password) => {
+  try {
+    // Sign in the user
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    
+    // Check if user is a superadmin by querying the users collection
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where("uid", "==", user.uid), where("role", "==", "superadmin"));
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      // If no document matches the criteria, the user is not a superadmin
+      await auth.signOut(); // Sign out the user
+      throw new Error("Not authorized as Super Admin");
+    }
+    
+    return user;
+  } catch (error) {
+    console.error("Authentication error:", error);
+    throw error;
+  }
 };
 
 // Function to reset total food needed for all schools

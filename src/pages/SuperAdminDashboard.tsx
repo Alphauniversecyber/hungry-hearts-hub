@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, getDocs } from "firebase/firestore";
@@ -17,15 +16,18 @@ const SuperAdminDashboard = () => {
   const [donators, setDonators] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("schools");
+  const [authError, setAuthError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const checkAuthAndFetchData = async () => {
       try {
-        // Use fetchWithAuth to ensure user is authenticated
+        setLoading(true);
+        
+        // Use fetchWithAuth to ensure user is authenticated and authorized
         await fetchWithAuth(async () => {
-          console.log("Authenticated, fetching data...");
+          console.log("Authenticated as superadmin, fetching data...");
           
           // Fetch schools
           const schoolsCollection = collection(db, "schools");
@@ -38,9 +40,9 @@ const SuperAdminDashboard = () => {
               email: data.email || "",
               address: data.address || "",
               phoneNumber: data.phoneNumber || "",
-              phone: data.phone || data.phoneNumber || "", // Ensure phone is available
+              phone: data.phone || data.phoneNumber || "", 
               status: data.status || "pending",
-              totalFoodNeeded: data.totalFoodNeeded
+              totalFoodNeeded: data.totalFoodNeeded || 0
             } as School;
           });
           
@@ -66,21 +68,34 @@ const SuperAdminDashboard = () => {
           const donatorsList = usersList.filter(user => user.role === "donor");
           setDonators(donatorsList);
           console.log("Donators fetched:", donatorsList);
+          
+          return { success: true };
         });
       } catch (error: any) {
         console.error("Error fetching data:", error);
-        toast({
-          title: "Error fetching data",
-          description: error.message,
-          variant: "destructive",
-        });
+        
+        // Handle specific authentication errors
+        if (error.message === "User not authenticated") {
+          setAuthError("You are not logged in. Please log in.");
+          navigate("/super-admin-login");
+        } else if (error.message === "User not authorized as superadmin") {
+          setAuthError("You don't have permission to view this page.");
+          navigate("/login");
+        } else {
+          setAuthError("An error occurred. Please try logging in again.");
+          toast({
+            title: "Error fetching data",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, [toast]);
+    checkAuthAndFetchData();
+  }, [toast, navigate]);
 
   const handleLogout = async () => {
     try {
@@ -100,6 +115,20 @@ const SuperAdminDashboard = () => {
 
   if (loading) {
     return <Loading message="Loading data..." />;
+  }
+
+  if (authError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Access Error</h2>
+          <p className="text-gray-700 mb-6">{authError}</p>
+          <Button onClick={() => navigate("/super-admin-login")} className="w-full">
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
