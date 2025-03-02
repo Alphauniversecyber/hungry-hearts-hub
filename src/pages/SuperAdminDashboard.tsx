@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, getDocs } from "firebase/firestore";
@@ -6,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Edit, Plus } from "lucide-react";
+import { LogOut, Edit, Plus, User } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface School {
   id: string;
@@ -19,15 +21,27 @@ interface School {
   totalFoodNeeded: number;
 }
 
+interface Donator {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  createdAt: string;
+}
+
 const SuperAdminDashboard = () => {
   const [schools, setSchools] = useState<School[]>([]);
+  const [donators, setDonators] = useState<Donator[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("schools");
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchSchools = async () => {
+    const fetchData = async () => {
       try {
+        // Fetch schools
         const schoolsCollection = collection(db, "schools");
         const schoolsSnapshot = await getDocs(schoolsCollection);
         const schoolsList = schoolsSnapshot.docs.map(doc => ({
@@ -35,9 +49,20 @@ const SuperAdminDashboard = () => {
           ...doc.data()
         })) as School[];
         setSchools(schoolsList);
+
+        // Fetch donators (users with role donor)
+        const usersCollection = collection(db, "users");
+        const usersSnapshot = await getDocs(usersCollection);
+        const donatorsList = usersSnapshot.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }))
+          .filter(user => user.role === "donor") as Donator[];
+        setDonators(donatorsList);
       } catch (error: any) {
         toast({
-          title: "Error fetching schools",
+          title: "Error fetching data",
           description: error.message,
           variant: "destructive",
         });
@@ -46,7 +71,7 @@ const SuperAdminDashboard = () => {
       }
     };
 
-    fetchSchools();
+    fetchData();
   }, [toast]);
 
   const handleLogout = async () => {
@@ -66,7 +91,7 @@ const SuperAdminDashboard = () => {
   };
 
   if (loading) {
-    return <Loading message="Loading schools..." />;
+    return <Loading message="Loading data..." />;
   }
 
   return (
@@ -123,73 +148,136 @@ const SuperAdminDashboard = () => {
           <Card>
             <CardHeader>
               <CardTitle className="text-base sm:text-lg md:text-xl font-oswald">
-                Pending Approvals
+                Total Donators
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-yellow-600">
-                {schools.filter(school => school.status === "pending").length}
+              <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-600">
+                {donators.length}
               </p>
             </CardContent>
           </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg sm:text-xl md:text-2xl font-oswald">
-              Registered Schools
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs sm:text-sm md:text-base font-oswald">School Name</TableHead>
-                    <TableHead className="text-xs sm:text-sm md:text-base font-oswald hidden md:table-cell">Email</TableHead>
-                    <TableHead className="text-xs sm:text-sm md:text-base font-oswald hidden sm:table-cell">Phone</TableHead>
-                    <TableHead className="text-xs sm:text-sm md:text-base font-oswald">Status</TableHead>
-                    <TableHead className="text-xs sm:text-sm md:text-base font-oswald">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {schools.map((school) => (
-                    <TableRow key={school.id}>
-                      <TableCell className="text-xs sm:text-sm md:text-base font-medium">
-                        {school.name}
-                      </TableCell>
-                      <TableCell className="text-xs sm:text-sm md:text-base hidden md:table-cell">
-                        {school.email}
-                      </TableCell>
-                      <TableCell className="text-xs sm:text-sm md:text-base hidden sm:table-cell">
-                        {school.phone}
-                      </TableCell>
-                      <TableCell>
-                        <span className={`text-xs sm:text-sm inline-flex items-center rounded-full px-2.5 py-0.5 font-medium
-                          ${school.status === 'active' ? 'bg-green-100 text-green-800' :
-                          school.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'}`}>
-                          {school.status.charAt(0).toUpperCase() + school.status.slice(1)}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          onClick={() => navigate(`/super-admin/edit/${school.id}`)}
-                          size="sm"
-                          variant="outline"
-                          className="text-xs sm:text-sm"
-                        >
-                          <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                          Edit
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="schools" onValueChange={setActiveTab} className="w-full">
+          <TabsList className="w-full justify-start mb-4">
+            <TabsTrigger value="schools" className="text-sm sm:text-base font-oswald">Schools</TabsTrigger>
+            <TabsTrigger value="donators" className="text-sm sm:text-base font-oswald">Donators</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="schools">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg sm:text-xl md:text-2xl font-oswald">
+                  Registered Schools
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-xs sm:text-sm md:text-base font-oswald">School Name</TableHead>
+                        <TableHead className="text-xs sm:text-sm md:text-base font-oswald hidden md:table-cell">Email</TableHead>
+                        <TableHead className="text-xs sm:text-sm md:text-base font-oswald hidden sm:table-cell">Phone</TableHead>
+                        <TableHead className="text-xs sm:text-sm md:text-base font-oswald">Status</TableHead>
+                        <TableHead className="text-xs sm:text-sm md:text-base font-oswald">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {schools.map((school) => (
+                        <TableRow key={school.id}>
+                          <TableCell className="text-xs sm:text-sm md:text-base font-medium">
+                            {school.name}
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm md:text-base hidden md:table-cell">
+                            {school.email}
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm md:text-base hidden sm:table-cell">
+                            {school.phone}
+                          </TableCell>
+                          <TableCell>
+                            <span className={`text-xs sm:text-sm inline-flex items-center rounded-full px-2.5 py-0.5 font-medium
+                              ${school.status === 'active' ? 'bg-green-100 text-green-800' :
+                              school.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'}`}>
+                              {school.status.charAt(0).toUpperCase() + school.status.slice(1)}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              onClick={() => navigate(`/super-admin/edit/${school.id}`)}
+                              size="sm"
+                              variant="outline"
+                              className="text-xs sm:text-sm"
+                            >
+                              <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                              Edit
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="donators">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg sm:text-xl md:text-2xl font-oswald">
+                  Registered Donators
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-xs sm:text-sm md:text-base font-oswald">Name</TableHead>
+                        <TableHead className="text-xs sm:text-sm md:text-base font-oswald hidden md:table-cell">Email</TableHead>
+                        <TableHead className="text-xs sm:text-sm md:text-base font-oswald hidden sm:table-cell">Phone</TableHead>
+                        <TableHead className="text-xs sm:text-sm md:text-base font-oswald">Registered On</TableHead>
+                        <TableHead className="text-xs sm:text-sm md:text-base font-oswald">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {donators.map((donator) => (
+                        <TableRow key={donator.id}>
+                          <TableCell className="text-xs sm:text-sm md:text-base font-medium">
+                            {donator.name}
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm md:text-base hidden md:table-cell">
+                            {donator.email}
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm md:text-base hidden sm:table-cell">
+                            {donator.phone}
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm md:text-base">
+                            {new Date(donator.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              onClick={() => navigate(`/super-admin/edit/${donator.id}`)}
+                              size="sm"
+                              variant="outline"
+                              className="text-xs sm:text-sm"
+                            >
+                              <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                              Edit
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

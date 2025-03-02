@@ -1,8 +1,8 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword, AuthErrorCodes } from "firebase/auth";
-import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { collection, addDoc, query, where, getDocs, setDoc, doc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,37 +48,66 @@ const SchoolRegister = () => {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      // Create the school document with status field
       const schoolData = {
         name: schoolName,
         email,
         address,
         phoneNumber,
         adminId: user.uid,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        status: "pending", // Set initial status as pending
+        totalFoodNeeded: 0 // Initialize with 0
       };
 
-      await addDoc(collection(db, "schools"), schoolData);
+      // Create school in collection
+      const schoolRef = await addDoc(collection(db, "schools"), schoolData);
+      
+      // Also create a user document for this admin
+      await setDoc(doc(db, "users", user.uid), {
+        name: schoolName,
+        email,
+        phone: phoneNumber,
+        role: "school_admin",
+        createdAt: new Date().toISOString(),
+        schoolId: schoolRef.id
+      });
 
       toast({
         title: "School registered successfully",
-        description: "You can now login with your school account.",
+        description: "Your school registration is pending approval. You can now login with your school account.",
       });
 
       navigate("/admin-login");
     } catch (error: any) {
       let errorMessage = "An error occurred during registration";
       
-      // Handle specific Firebase Auth errors
-      if (error.code === AuthErrorCodes.EMAIL_EXISTS || 
-          error.message === "EMAIL_EXISTS" ||
-          error.message.includes("EMAIL_EXISTS")) {
+      if (error.code === "auth/email-already-in-use") {
         errorMessage = "This email is already registered. Please use a different email or login instead.";
-      } else if (error.code === AuthErrorCodes.WEAK_PASSWORD) {
+      } else if (error.code === "auth/invalid-email") {
+        errorMessage = "Please enter a valid email address";
+      } else if (error.code === "auth/operation-not-allowed") {
+        errorMessage = "Email/password accounts are not enabled. Please contact support.";
+      } else if (error.code === "auth/weak-password") {
         errorMessage = "Password should be at least 6 characters long";
+      } else if (error.code === "auth/unauthorized-domain") {
+        errorMessage = "This domain is not authorized for Firebase Authentication. Please contact support.";
+      } else if (error.code === "auth/missing-android-pkg-name") {
+        errorMessage = "Missing Android package name. Please contact support.";
+      } else if (error.code === "auth/missing-continue-uri") {
+        errorMessage = "Missing continue URL. Please contact support.";
+      } else if (error.code === "auth/missing-ios-bundle-id") {
+        errorMessage = "Missing iOS bundle ID. Please contact support.";
+      } else if (error.code === "auth/invalid-continue-uri") {
+        errorMessage = "Invalid continue URL. Please contact support.";
+      } else if (error.code === "auth/unauthorized-continue-uri") {
+        errorMessage = "The domain of the continue URL is not whitelisted. Please contact support.";
       } else if (error.message) {
         errorMessage = error.message;
       }
 
+      console.error("School registration error:", error);
+      
       toast({
         title: "Registration failed",
         description: errorMessage,
