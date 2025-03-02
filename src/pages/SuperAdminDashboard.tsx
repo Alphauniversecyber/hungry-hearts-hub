@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Edit, Plus } from "lucide-react"; // Removed the User import from lucide-react
+import { LogOut, Edit, Plus } from "lucide-react"; 
 import { Loading } from "@/components/ui/loading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { School, User } from "@/types/school";
@@ -26,23 +26,44 @@ const SuperAdminDashboard = () => {
         // Fetch schools
         const schoolsCollection = collection(db, "schools");
         const schoolsSnapshot = await getDocs(schoolsCollection);
-        const schoolsList = schoolsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as School[];
+        const schoolsList = schoolsSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name || "",
+            email: data.email || "",
+            address: data.address || "",
+            phoneNumber: data.phoneNumber || "",
+            phone: data.phone || data.phoneNumber || "", // Ensure phone is available
+            status: data.status || "pending",
+            totalFoodNeeded: data.totalFoodNeeded
+          } as School;
+        });
+        
         setSchools(schoolsList);
+        console.log("Schools fetched:", schoolsList);
 
         // Fetch donators (users with role donor)
         const usersCollection = collection(db, "users");
         const usersSnapshot = await getDocs(usersCollection);
-        const usersList = usersSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as User[];
+        const usersList = usersSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name || "",
+            email: data.email || "",
+            phone: data.phone || "",
+            role: data.role || "",
+            createdAt: data.createdAt || new Date().toISOString(),
+            schoolId: data.schoolId
+          } as User;
+        });
         
         const donatorsList = usersList.filter(user => user.role === "donor");
         setDonators(donatorsList);
+        console.log("Donators fetched:", donatorsList);
       } catch (error: any) {
+        console.error("Error fetching data:", error);
         toast({
           title: "Error fetching data",
           description: error.message,
@@ -167,38 +188,46 @@ const SuperAdminDashboard = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {schools.map((school) => (
-                        <TableRow key={school.id}>
-                          <TableCell className="text-xs sm:text-sm md:text-base font-medium">
-                            {school.name}
-                          </TableCell>
-                          <TableCell className="text-xs sm:text-sm md:text-base hidden md:table-cell">
-                            {school.email}
-                          </TableCell>
-                          <TableCell className="text-xs sm:text-sm md:text-base hidden sm:table-cell">
-                            {school.phone}
-                          </TableCell>
-                          <TableCell>
-                            <span className={`text-xs sm:text-sm inline-flex items-center rounded-full px-2.5 py-0.5 font-medium
-                              ${school.status === 'active' ? 'bg-green-100 text-green-800' :
-                              school.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-red-100 text-red-800'}`}>
-                              {school.status.charAt(0).toUpperCase() + school.status.slice(1)}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              onClick={() => navigate(`/super-admin/edit/${school.id}`)}
-                              size="sm"
-                              variant="outline"
-                              className="text-xs sm:text-sm"
-                            >
-                              <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                              Edit
-                            </Button>
+                      {schools.length > 0 ? (
+                        schools.map((school) => (
+                          <TableRow key={school.id}>
+                            <TableCell className="text-xs sm:text-sm md:text-base font-medium">
+                              {school.name}
+                            </TableCell>
+                            <TableCell className="text-xs sm:text-sm md:text-base hidden md:table-cell">
+                              {school.email}
+                            </TableCell>
+                            <TableCell className="text-xs sm:text-sm md:text-base hidden sm:table-cell">
+                              {school.phone || school.phoneNumber}
+                            </TableCell>
+                            <TableCell>
+                              <span className={`text-xs sm:text-sm inline-flex items-center rounded-full px-2.5 py-0.5 font-medium
+                                ${school.status === 'active' ? 'bg-green-100 text-green-800' :
+                                school.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'}`}>
+                                {school.status ? school.status.charAt(0).toUpperCase() + school.status.slice(1) : 'Pending'}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                onClick={() => navigate(`/super-admin/edit/${school.id}`)}
+                                size="sm"
+                                variant="outline"
+                                className="text-xs sm:text-sm"
+                              >
+                                <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                Edit
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                            No schools found
                           </TableCell>
                         </TableRow>
-                      ))}
+                      )}
                     </TableBody>
                   </Table>
                 </div>
@@ -226,33 +255,41 @@ const SuperAdminDashboard = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {donators.map((donator) => (
-                        <TableRow key={donator.id}>
-                          <TableCell className="text-xs sm:text-sm md:text-base font-medium">
-                            {donator.name}
-                          </TableCell>
-                          <TableCell className="text-xs sm:text-sm md:text-base hidden md:table-cell">
-                            {donator.email}
-                          </TableCell>
-                          <TableCell className="text-xs sm:text-sm md:text-base hidden sm:table-cell">
-                            {donator.phone}
-                          </TableCell>
-                          <TableCell className="text-xs sm:text-sm md:text-base">
-                            {new Date(donator.createdAt).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              onClick={() => navigate(`/super-admin/edit/${donator.id}`)}
-                              size="sm"
-                              variant="outline"
-                              className="text-xs sm:text-sm"
-                            >
-                              <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                              Edit
-                            </Button>
+                      {donators.length > 0 ? (
+                        donators.map((donator) => (
+                          <TableRow key={donator.id}>
+                            <TableCell className="text-xs sm:text-sm md:text-base font-medium">
+                              {donator.name}
+                            </TableCell>
+                            <TableCell className="text-xs sm:text-sm md:text-base hidden md:table-cell">
+                              {donator.email}
+                            </TableCell>
+                            <TableCell className="text-xs sm:text-sm md:text-base hidden sm:table-cell">
+                              {donator.phone}
+                            </TableCell>
+                            <TableCell className="text-xs sm:text-sm md:text-base">
+                              {donator.createdAt ? new Date(donator.createdAt).toLocaleDateString() : 'N/A'}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                onClick={() => navigate(`/super-admin/edit/${donator.id}`)}
+                                size="sm"
+                                variant="outline"
+                                className="text-xs sm:text-sm"
+                              >
+                                <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                Edit
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                            No donators found
                           </TableCell>
                         </TableRow>
-                      ))}
+                      )}
                     </TableBody>
                   </Table>
                 </div>
