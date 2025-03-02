@@ -6,6 +6,18 @@ export interface School {
   address: string;
   phoneNumber: string;
   totalFoodNeeded?: number;
+  status?: "active" | "pending" | "rejected";
+  phone?: string; // Alternative field name used in the dashboard
+}
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  createdAt: string;
+  schoolId?: string;
 }
 
 export interface Donation {
@@ -31,7 +43,7 @@ export interface FoodItem {
 export interface DetailedDonation extends Donation {
   userName: string;
   userEmail: string;
-  userPhone: string; // Added phone number
+  userPhone: string;
   schoolName: string;
   foodItemName: string;
 }

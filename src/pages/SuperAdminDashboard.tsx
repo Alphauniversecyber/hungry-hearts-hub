@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, getDocs } from "firebase/firestore";
@@ -10,29 +9,11 @@ import { useToast } from "@/hooks/use-toast";
 import { LogOut, Edit, Plus, User } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-interface School {
-  id: string;
-  name: string;
-  address: string;
-  email: string;
-  phone: string;
-  status: "active" | "pending" | "rejected";
-  totalFoodNeeded: number;
-}
-
-interface Donator {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: string;
-  createdAt: string;
-}
+import { School, User } from "@/types/school";
 
 const SuperAdminDashboard = () => {
   const [schools, setSchools] = useState<School[]>([]);
-  const [donators, setDonators] = useState<Donator[]>([]);
+  const [donators, setDonators] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("schools");
   const navigate = useNavigate();
@@ -58,7 +39,7 @@ const SuperAdminDashboard = () => {
             id: doc.id,
             ...doc.data()
           }))
-          .filter(user => user.role === "donor") as Donator[];
+          .filter(user => user.role === "donor") as User[];
         setDonators(donatorsList);
       } catch (error: any) {
         toast({
