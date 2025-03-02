@@ -1,7 +1,7 @@
 
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore, collection, query, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, collection, query, getDocs, updateDoc, doc, setDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAqSgN7R9qRo8csE7gznnP4Wlr7zIsVHrg",
@@ -16,6 +16,26 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Helper function to check if user is authenticated before accessing Firestore
+export const fetchWithAuth = async (callback) => {
+  return new Promise((resolve, reject) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      unsubscribe();
+      if (user) {
+        try {
+          const result = await callback();
+          resolve(result);
+        } catch (error) {
+          console.error("Error in fetchWithAuth:", error);
+          reject(error);
+        }
+      } else {
+        reject(new Error("User not authenticated"));
+      }
+    });
+  });
+};
 
 // Function to reset total food needed for all schools
 const resetTotalFoodNeeded = async () => {

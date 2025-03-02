@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, getDocs } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { auth, db, fetchWithAuth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -23,45 +23,50 @@ const SuperAdminDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch schools
-        const schoolsCollection = collection(db, "schools");
-        const schoolsSnapshot = await getDocs(schoolsCollection);
-        const schoolsList = schoolsSnapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            name: data.name || "",
-            email: data.email || "",
-            address: data.address || "",
-            phoneNumber: data.phoneNumber || "",
-            phone: data.phone || data.phoneNumber || "", // Ensure phone is available
-            status: data.status || "pending",
-            totalFoodNeeded: data.totalFoodNeeded
-          } as School;
-        });
-        
-        setSchools(schoolsList);
-        console.log("Schools fetched:", schoolsList);
+        // Use fetchWithAuth to ensure user is authenticated
+        await fetchWithAuth(async () => {
+          console.log("Authenticated, fetching data...");
+          
+          // Fetch schools
+          const schoolsCollection = collection(db, "schools");
+          const schoolsSnapshot = await getDocs(schoolsCollection);
+          const schoolsList = schoolsSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              name: data.name || "",
+              email: data.email || "",
+              address: data.address || "",
+              phoneNumber: data.phoneNumber || "",
+              phone: data.phone || data.phoneNumber || "", // Ensure phone is available
+              status: data.status || "pending",
+              totalFoodNeeded: data.totalFoodNeeded
+            } as School;
+          });
+          
+          setSchools(schoolsList);
+          console.log("Schools fetched:", schoolsList);
 
-        // Fetch donators (users with role donor)
-        const usersCollection = collection(db, "users");
-        const usersSnapshot = await getDocs(usersCollection);
-        const usersList = usersSnapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            name: data.name || "",
-            email: data.email || "",
-            phone: data.phone || "",
-            role: data.role || "",
-            createdAt: data.createdAt || new Date().toISOString(),
-            schoolId: data.schoolId
-          } as User;
+          // Fetch donators (users with role donor)
+          const usersCollection = collection(db, "users");
+          const usersSnapshot = await getDocs(usersCollection);
+          const usersList = usersSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              name: data.name || "",
+              email: data.email || "",
+              phone: data.phone || "",
+              role: data.role || "",
+              createdAt: data.createdAt || new Date().toISOString(),
+              schoolId: data.schoolId
+            } as User;
+          });
+          
+          const donatorsList = usersList.filter(user => user.role === "donor");
+          setDonators(donatorsList);
+          console.log("Donators fetched:", donatorsList);
         });
-        
-        const donatorsList = usersList.filter(user => user.role === "donor");
-        setDonators(donatorsList);
-        console.log("Donators fetched:", donatorsList);
       } catch (error: any) {
         console.error("Error fetching data:", error);
         toast({
