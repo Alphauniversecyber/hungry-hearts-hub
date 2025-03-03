@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { getFirestore, collection, query, getDocs, updateDoc, doc, setDoc, where } from 'firebase/firestore';
+import { getFirestore, collection, query, getDocs, updateDoc, doc, setDoc, where, enableIndexedDbPersistence } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAqSgN7R9qRo8csE7gznnP4Wlr7zIsVHrg",
@@ -16,6 +16,20 @@ console.log("Initializing Firebase with config:", firebaseConfig);
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Enable offline persistence (can help with some connection issues)
+enableIndexedDbPersistence(db)
+  .then(() => {
+    console.log("Firestore persistence enabled successfully");
+  })
+  .catch((err) => {
+    console.error("Error enabling Firestore persistence:", err);
+    if (err.code === 'failed-precondition') {
+      console.warn("Multiple tabs open, persistence can only be enabled in one tab at a time.");
+    } else if (err.code === 'unimplemented') {
+      console.warn("The current browser does not support all of the features required to enable persistence");
+    }
+  });
 
 // Enhanced helper function to check if user is authenticated and has admin rights
 export const fetchWithAuth = async (callback) => {

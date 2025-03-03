@@ -128,32 +128,49 @@ const SchoolRegister = () => {
 
       console.log("Creating school document with data:", schoolData);
 
-      // Create school in collection
-      const schoolRef = await addDoc(collection(db, "schools"), schoolData);
-      console.log("School document created with ID:", schoolRef.id);
-      
-      // Also create a user document for this admin
-      const userData = {
-        name: schoolName,
-        email,
-        phone: phoneNumber,
-        role: "school_admin",
-        uid: user.uid,
-        createdAt: new Date().toISOString(),
-        schoolId: schoolRef.id
-      };
+      try {
+        // Create school in collection
+        const schoolRef = await addDoc(collection(db, "schools"), schoolData);
+        console.log("School document created with ID:", schoolRef.id);
+        
+        // Also create a user document for this admin
+        const userData = {
+          name: schoolName,
+          email,
+          phone: phoneNumber,
+          role: "school_admin",
+          uid: user.uid,
+          createdAt: new Date().toISOString(),
+          schoolId: schoolRef.id
+        };
 
-      console.log("Creating user document with data:", userData);
-      await setDoc(doc(db, "users", user.uid), userData);
-      console.log("User document created with ID:", user.uid);
+        console.log("Creating user document with data:", userData);
+        await setDoc(doc(db, "users", user.uid), userData);
+        console.log("User document created with ID:", user.uid);
 
-      toast({
-        title: "School registered successfully",
-        description: "Your school registration is pending approval. You can now login with your school account.",
-      });
+        toast({
+          title: "School registered successfully",
+          description: "Your school registration is pending approval. You can now login with your school account.",
+        });
 
-      navigate("/admin-login");
-    } catch (error: any) {
+        navigate("/admin-login");
+      } catch (firestoreError) {
+        console.error("Firestore write error:", firestoreError);
+        
+        // Special handling for permission error - this would happen with restrictive Firestore rules
+        if (firestoreError.code === "permission-denied") {
+          toast({
+            title: "Registration incomplete",
+            description: "Your user account was created, but we couldn't save your school information due to permission issues. Please contact support with your email address.",
+            variant: "destructive",
+          });
+          navigate("/admin-login");
+        } else {
+          // Handle other Firestore errors
+          throw firestoreError;
+        }
+      }
+    } catch (error) {
       let errorMessage = "An error occurred during registration";
       
       console.error("School registration error:", error);
@@ -262,6 +279,10 @@ const SchoolRegister = () => {
               >
                 {isLoading ? "Registering..." : "Register School"}
               </Button>
+              
+              <div className="text-sm text-gray-600 mt-4">
+                <p className="text-center">Having trouble registering? Please contact our support team.</p>
+              </div>
             </form>
           </div>
         </div>
