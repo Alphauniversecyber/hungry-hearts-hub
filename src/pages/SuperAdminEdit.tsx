@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { doc, updateDoc, getDoc, deleteDoc, collection, getDocs, addDoc, query, where } from "firebase/firestore";
@@ -20,6 +21,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { FoodItemsTable } from "@/components/dashboard/FoodItemsTable";
 
 interface User {
   uid: string;
@@ -27,6 +36,8 @@ interface User {
   email: string;
   phone?: string;
   phoneNumber?: string;
+  role?: string;
+  status?: string;
 }
 
 interface FormData {
@@ -53,12 +64,14 @@ const SuperAdminEdit = () => {
     phoneNumber: "",
     password: ""
   });
+  const [accountStatus, setAccountStatus] = useState<string>("pending");
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
   const [newFoodItem, setNewFoodItem] = useState<FoodItemForm>({
     name: "",
     description: ""
   });
   const [totalFoodNeeded, setTotalFoodNeeded] = useState<number>(0);
+  const [editingFoodItem, setEditingFoodItem] = useState<FoodItem | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -73,7 +86,11 @@ const SuperAdminEdit = () => {
           return;
         }
 
-        const docRef = doc(db, type === "school" ? "schools" : "users", id);
+        // Determine collection based on path parameter
+        const collection = type === "school" ? "schools" : "users";
+        console.log(`Fetching data from ${collection} collection for ID: ${id}`);
+        
+        const docRef = doc(db, collection, id);
         const docSnap = await getDoc(docRef);
         
         if (docSnap.exists()) {
@@ -84,9 +101,11 @@ const SuperAdminEdit = () => {
             name: docData.name || "",
             email: docData.email || "",
             phoneNumber: docData.phoneNumber || docData.phone || "",
-            totalFoodNeeded: docData.totalFoodNeeded || 0
+            totalFoodNeeded: docData.totalFoodNeeded || 0,
+            status: docData.status || "pending"
           };
 
+          console.log("Document data:", formattedData);
           setData(formattedData as School | User);
           setFormData({
             name: formattedData.name,
@@ -95,6 +114,7 @@ const SuperAdminEdit = () => {
             password: ""
           });
           setTotalFoodNeeded(formattedData.totalFoodNeeded || 0);
+          setAccountStatus(formattedData.status || "pending");
         } else {
           toast({
             title: "Error",
@@ -116,13 +136,23 @@ const SuperAdminEdit = () => {
 
     const fetchFoodItems = async () => {
       if (type === "school" && id) {
-        const foodItemsQuery = query(collection(db, "foodItems"), where("schoolId", "==", id));
-        const foodItemsSnapshot = await getDocs(foodItemsQuery);
-        const foodItemsList = foodItemsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as FoodItem));
-        setFoodItems(foodItemsList);
+        try {
+          console.log("Fetching food items for school:", id);
+          const foodItemsQuery = query(collection(db, "foodItems"), where("schoolId", "==", id));
+          const foodItemsSnapshot = await getDocs(foodItemsQuery);
+          const foodItemsList = foodItemsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          } as FoodItem));
+          console.log("Food items fetched:", foodItemsList);
+          setFoodItems(foodItemsList);
+        } catch (error) {
+          console.error("Error fetching food items:", error);
+          toast({
+            title: "Error fetching food items",
+            variant: "destructive",
+          });
+        }
       }
     };
 
@@ -146,9 +176,12 @@ const SuperAdminEdit = () => {
       }
 
       const collection = type === "school" ? "schools" : "users";
+      console.log(`Updating ${collection} with ID: ${id}`);
+      
       const updateData: Record<string, any> = {
         name: formData.name,
         phoneNumber: formData.phoneNumber,
+        status: accountStatus,
       };
 
       if (type === "school") {
@@ -167,6 +200,7 @@ const SuperAdminEdit = () => {
         updateData.password = formData.password;
       }
 
+      console.log("Update data:", updateData);
       await updateDoc(doc(db, collection, id), updateData);
 
       toast({
@@ -175,6 +209,7 @@ const SuperAdminEdit = () => {
 
       navigate("/super-admin");
     } catch (error: any) {
+      console.error("Error updating:", error);
       toast({
         title: "Error updating",
         description: error.message,
@@ -188,6 +223,8 @@ const SuperAdminEdit = () => {
       if (!id || !type) return;
 
       const collection = type === "school" ? "schools" : "users";
+      console.log(`Deleting ${collection} with ID: ${id}`);
+      
       await deleteDoc(doc(db, collection, id));
 
       toast({
@@ -196,6 +233,7 @@ const SuperAdminEdit = () => {
 
       navigate("/super-admin");
     } catch (error: any) {
+      console.error("Error deleting:", error);
       toast({
         title: "Error deleting",
         description: error.message,
@@ -213,8 +251,10 @@ const SuperAdminEdit = () => {
         schoolId: id,
       };
 
+      console.log("Adding food item:", foodItemData);
       const docRef = await addDoc(collection(db, "foodItems"), foodItemData);
-      setFoodItems([...foodItems, { id: docRef.id, ...foodItemData }]);
+      const newItem = { id: docRef.id, ...foodItemData };
+      setFoodItems([...foodItems, newItem]);
       
       setNewFoodItem({
         name: "",
@@ -225,6 +265,7 @@ const SuperAdminEdit = () => {
         title: "Food item added successfully",
       });
     } catch (error: any) {
+      console.error("Error adding food item:", error);
       toast({
         title: "Error adding food item",
         description: error.message,
@@ -235,18 +276,30 @@ const SuperAdminEdit = () => {
 
   const handleDeleteFoodItem = async (foodItemId: string) => {
     try {
+      console.log("Deleting food item:", foodItemId);
       await deleteDoc(doc(db, "foodItems", foodItemId));
       setFoodItems(foodItems.filter(item => item.id !== foodItemId));
       toast({
         title: "Food item deleted successfully",
       });
     } catch (error: any) {
+      console.error("Error deleting food item:", error);
       toast({
         title: "Error deleting food item",
         description: error.message,
         variant: "destructive",
       });
     }
+  };
+
+  const handleEditFoodItem = (item: FoodItem) => {
+    console.log("Editing food item:", item);
+    setEditingFoodItem(item);
+    // You would typically show a modal or update a form here
+    toast({
+      title: "Edit functionality not implemented",
+      description: "This would show an edit modal in a complete implementation",
+    });
   };
 
   if (loading) {
@@ -315,6 +368,20 @@ const SuperAdminEdit = () => {
                   pattern="\d{10}"
                   title="Phone number must be exactly 10 digits"
                 />
+              </div>
+
+              <div>
+                <Label>Account Status</Label>
+                <Select value={accountStatus} onValueChange={setAccountStatus}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {type === "school" && (
@@ -392,29 +459,18 @@ const SuperAdminEdit = () => {
                     />
                   </div>
                 </div>
-                <Button onClick={handleAddFoodItem} className="flex items-center gap-2">
+                <Button onClick={handleAddFoodItem} className="flex items-center gap-2" type="button">
                   <Plus size={16} />
                   Add Food Item
                 </Button>
               </div>
 
-              <div className="space-y-4">
-                {foodItems.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p className="font-medium">{item.name}</p>
-                      <p className="text-sm text-gray-600">{item.description}</p>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => handleDeleteFoodItem(item.id)}
-                    >
-                      <Trash size={16} />
-                    </Button>
-                  </div>
-                ))}
-              </div>
+              <FoodItemsTable 
+                schoolId={id || ""}
+                foodItems={foodItems}
+                setFoodItems={setFoodItems}
+                onEdit={handleEditFoodItem}
+              />
             </div>
           )}
         </div>

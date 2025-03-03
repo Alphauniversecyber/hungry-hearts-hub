@@ -20,16 +20,24 @@ const SuperAdminDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const handleEditSchool = (school: School) => {
+    console.log("Edit school clicked:", school);
+    navigate(`/super-admin/edit/school/${school.id}`);
+  };
+
+  const handleEditDonator = (donator: User) => {
+    console.log("Edit donator clicked:", donator);
+    navigate(`/super-admin/edit/user/${donator.id}`);
+  };
+
   useEffect(() => {
     const checkAuthAndFetchData = async () => {
       try {
         setLoading(true);
         
-        // Use fetchWithAuth to ensure user is authenticated and authorized
         await fetchWithAuth(async () => {
           console.log("Authenticated as superadmin, fetching data...");
           
-          // Fetch schools
           const schoolsCollection = collection(db, "schools");
           const schoolsSnapshot = await getDocs(schoolsCollection);
           const schoolsList = schoolsSnapshot.docs.map(doc => {
@@ -49,7 +57,6 @@ const SuperAdminDashboard = () => {
           setSchools(schoolsList);
           console.log("Schools fetched:", schoolsList);
 
-          // Fetch donators (users with role donor)
           const usersCollection = collection(db, "users");
           const usersSnapshot = await getDocs(usersCollection);
           const usersList = usersSnapshot.docs.map(doc => {
@@ -74,7 +81,6 @@ const SuperAdminDashboard = () => {
       } catch (error: any) {
         console.error("Error fetching data:", error);
         
-        // Handle specific authentication errors
         if (error.message === "User not authenticated") {
           setAuthError("You are not logged in. Please log in.");
           navigate("/super-admin-login");
@@ -244,10 +250,11 @@ const SuperAdminDashboard = () => {
                             </TableCell>
                             <TableCell>
                               <Button
-                                onClick={() => navigate(`/super-admin/edit/${school.id}`)}
+                                onClick={() => handleEditSchool(school)}
                                 size="sm"
                                 variant="outline"
                                 className="text-xs sm:text-sm"
+                                type="button"
                               >
                                 <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                                 Edit
@@ -306,10 +313,11 @@ const SuperAdminDashboard = () => {
                             </TableCell>
                             <TableCell>
                               <Button
-                                onClick={() => navigate(`/super-admin/edit/${donator.id}`)}
+                                onClick={() => handleEditDonator(donator)}
                                 size="sm"
                                 variant="outline"
                                 className="text-xs sm:text-sm"
+                                type="button"
                               >
                                 <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                                 Edit
