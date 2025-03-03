@@ -1,15 +1,13 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { auth, authenticateSchoolAdmin } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import MainNav from "@/components/MainNav";
 import { Link } from "react-router-dom";
-import { Loader } from "lucide-react";
+import { Loading } from "@/components/ui/loading";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -39,18 +37,8 @@ const AdminLogin = () => {
     }
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      await authenticateSchoolAdmin(email, password);
       
-      // Check if this user is associated with a school
-      const schoolsRef = collection(db, "schools");
-      const q = query(schoolsRef, where("adminId", "==", userCredential.user.uid));
-      const querySnapshot = await getDocs(q);
-      
-      if (querySnapshot.empty) {
-        await auth.signOut(); // Sign out if not an admin
-        throw new Error("This account does not have admin privileges");
-      }
-
       toast({
         title: "Login successful",
         description: "Welcome back to your school dashboard!",
@@ -92,16 +80,7 @@ const AdminLogin = () => {
       <MainNav />
       <div className="flex items-center justify-center p-8">
         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md relative overflow-hidden">
-          {isLoading && (
-            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50">
-              <div className="flex flex-col items-center gap-3">
-                <Loader className="h-8 w-8 text-primary animate-spin" />
-                <p className="text-primary font-oswald text-lg animate-pulse">
-                  Logging in...
-                </p>
-              </div>
-            </div>
-          )}
+          {isLoading && <Loading message="Logging in..." />}
           
           <h2 className="text-3xl font-oswald font-bold text-gray-900 mb-6 text-center">
             School Login

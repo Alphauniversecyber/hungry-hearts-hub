@@ -1,6 +1,6 @@
 
 import { initializeApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { getFirestore, collection, query, getDocs, updateDoc, doc, setDoc, where } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -25,14 +25,15 @@ export const fetchWithAuth = async (callback) => {
       if (user) {
         try {
           // Check if user has admin role by fetching their user document
-          const usersRef = collection(db, 'users');
+          const usersRef = collection(db, "users");
           const q = query(usersRef, where("uid", "==", user.uid));
           const userSnapshot = await getDocs(q);
           
           let isAuthorized = false;
+          let userData = null;
           
           if (!userSnapshot.empty) {
-            const userData = userSnapshot.docs[0].data();
+            userData = userSnapshot.docs[0].data();
             // Check if user is a superadmin
             if (userData.role === 'superadmin') {
               isAuthorized = true;
@@ -44,6 +45,7 @@ export const fetchWithAuth = async (callback) => {
             resolve(result);
           } else {
             console.error("User not authorized as superadmin");
+            await signOut(auth); // Sign out user if not authorized
             reject(new Error("User not authorized as superadmin"));
           }
         } catch (error) {
@@ -65,8 +67,21 @@ export const authenticateSuperAdmin = async (email, password) => {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     
-    // Check if user is a superadmin by querying the users collection
-    const usersRef = collection(db, 'users');
+    // Create or update superadmin user if this is the designated superadmin email
+    if (email === "programx010@gmail.com") {
+      // Create or update user document for superadmin
+      await setDoc(doc(db, "users", user.uid), {
+        name: "Super Admin",
+        email,
+        role: "superadmin",
+        uid: user.uid,
+        createdAt: new Date().toISOString(),
+      }, { merge: true }); // merge: true will only update fields that are changed
+      return user;
+    }
+    
+    // If not the superadmin email, check if the user is already a superadmin
+    const usersRef = collection(db, "users");
     const q = query(usersRef, where("uid", "==", user.uid), where("role", "==", "superadmin"));
     const querySnapshot = await getDocs(q);
     
@@ -122,6 +137,47 @@ const scheduleReset = () => {
     // Then set up daily interval
     setInterval(resetTotalFoodNeeded, 24 * 60 * 60 * 1000);
   }, msUntilMidnight);
+};
+
+// Helper function to handle school admin authentication
+export const authenticateSchoolAdmin = async (email, password) => {
+  try {
+    // Sign in the user
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    
+    // Check if user is a school admin by querying the users collection
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("uid", "==", user.uid), where("role", "==", "school_admin"));
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      // If no document matches the criteria, the user is not a school admin
+      await auth.signOut(); // Sign out the user
+      throw new Error("Not authorized as School Admin");
+    }
+    
+    // Additionally, check if the school is approved
+    const userData = querySnapshot.docs[0].data();
+    if (userData.schoolId) {
+      const schoolRef = collection(db, "schools");
+      const schoolQuery = query(schoolRef, where("adminId", "==", user.uid));
+      const schoolSnapshot = await getDocs(schoolQuery);
+      
+      if (!schoolSnapshot.empty) {
+        const schoolData = schoolSnapshot.docs[0].data();
+        if (schoolData.status !== "active") {
+          await auth.signOut(); // Sign out if school is not active
+          throw new Error("Your school account is pending approval");
+        }
+      }
+    }
+    
+    return user;
+  } catch (error) {
+    console.error("Authentication error:", error);
+    throw error;
+  }
 };
 
 // Start the scheduling when the app initializes

@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import MainNav from "@/components/MainNav";
 import { Label } from "@/components/ui/label";
+import { Loading } from "@/components/ui/loading";
 
 const SchoolRegister = () => {
   const [schoolName, setSchoolName] = useState("");
@@ -134,9 +135,9 @@ const SchoolRegister = () => {
         email,
         phone: phoneNumber,
         role: "school_admin",
+        uid: user.uid,
         createdAt: new Date().toISOString(),
-        schoolId: schoolRef.id,
-        uid: user.uid
+        schoolId: schoolRef.id
       });
 
       toast({
@@ -156,6 +157,8 @@ const SchoolRegister = () => {
         errorMessage = "Email/password accounts are not enabled. Please contact support.";
       } else if (error.code === "auth/weak-password") {
         errorMessage = "Password should be at least 6 characters long";
+      } else if (error.code === "permission-denied") {
+        errorMessage = "Permission denied. Please contact the administrator.";
       } else if (error.message) {
         errorMessage = error.message;
       }
@@ -178,7 +181,8 @@ const SchoolRegister = () => {
       <div className="p-8">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-3xl font-bold text-center mb-8">Register Your School</h1>
-          <div className="bg-white p-6 rounded-lg shadow">
+          <div className="bg-white p-6 rounded-lg shadow relative">
+            {isLoading && <Loading message="Registering school..." />}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="schoolName">School Name</Label>

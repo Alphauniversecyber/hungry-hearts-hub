@@ -1,12 +1,12 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { authenticateSuperAdmin } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import MainNav from "@/components/MainNav";
+import { Loading } from "@/components/ui/loading";
 
 const SuperAdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -31,7 +31,7 @@ const SuperAdminLogin = () => {
     }
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await authenticateSuperAdmin(email, password);
       
       toast({
         title: "Login successful",
@@ -49,8 +49,11 @@ const SuperAdminLogin = () => {
         case 'auth/too-many-requests':
           errorMessage = "Too many failed attempts. Please try again later";
           break;
+        case 'auth/user-not-found':
+          errorMessage = "No account found with this email";
+          break;
         default:
-          errorMessage = "Invalid credentials";
+          errorMessage = error.message || "Invalid credentials";
       }
 
       toast({
@@ -67,7 +70,8 @@ const SuperAdminLogin = () => {
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
       <MainNav />
       <div className="flex items-center justify-center p-8">
-        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md relative">
+          {isLoading && <Loading message="Logging in..." />}
           <h2 className="text-3xl font-sigmar text-primary mb-2 text-center">
             FeedNet
           </h2>
