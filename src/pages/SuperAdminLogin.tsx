@@ -31,6 +31,7 @@ const SuperAdminLogin = () => {
     }
 
     try {
+      console.log("Attempting to authenticate super admin:", email);
       await authenticateSuperAdmin(email, password);
       
       toast({
@@ -40,6 +41,7 @@ const SuperAdminLogin = () => {
       navigate("/super-admin"); // Navigate to super admin dashboard
     } catch (error: any) {
       let errorMessage = "Login failed";
+      console.error("Super admin login error:", error);
       
       // Handle specific Firebase auth errors
       switch (error.code) {

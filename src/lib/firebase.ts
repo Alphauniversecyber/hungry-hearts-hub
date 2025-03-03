@@ -1,4 +1,3 @@
-
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { getFirestore, collection, query, getDocs, updateDoc, doc, setDoc, where } from 'firebase/firestore';
@@ -13,6 +12,7 @@ const firebaseConfig = {
   databaseURL: "https://food-management-system-e3e10-default-rtdb.firebaseio.com"
 };
 
+console.log("Initializing Firebase with config:", firebaseConfig);
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
@@ -24,6 +24,7 @@ export const fetchWithAuth = async (callback) => {
       unsubscribe();
       if (user) {
         try {
+          console.log("User authenticated:", user.uid);
           // Check if user has admin role by fetching their user document
           const usersRef = collection(db, "users");
           const q = query(usersRef, where("uid", "==", user.uid));
@@ -34,10 +35,13 @@ export const fetchWithAuth = async (callback) => {
           
           if (!userSnapshot.empty) {
             userData = userSnapshot.docs[0].data();
+            console.log("User data found:", userData);
             // Check if user is a superadmin
             if (userData.role === 'superadmin') {
               isAuthorized = true;
             }
+          } else {
+            console.log("No user document found for UID:", user.uid);
           }
           
           if (isAuthorized) {
@@ -63,20 +67,27 @@ export const fetchWithAuth = async (callback) => {
 // Helper function to authenticate super admin
 export const authenticateSuperAdmin = async (email, password) => {
   try {
+    console.log("Authenticating super admin:", email);
     // Sign in the user
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
+    console.log("User signed in:", user.uid);
     
     // Create or update superadmin user if this is the designated superadmin email
     if (email === "programx010@gmail.com") {
+      console.log("This is the super admin email, updating user document");
       // Create or update user document for superadmin
-      await setDoc(doc(db, "users", user.uid), {
+      const userData = {
         name: "Super Admin",
         email,
         role: "superadmin",
         uid: user.uid,
         createdAt: new Date().toISOString(),
-      }, { merge: true }); // merge: true will only update fields that are changed
+      };
+      
+      console.log("Creating/updating super admin document:", userData);
+      await setDoc(doc(db, "users", user.uid), userData, { merge: true }); // merge: true will only update fields that are changed
+      console.log("Super admin document created/updated");
       return user;
     }
     
@@ -87,8 +98,97 @@ export const authenticateSuperAdmin = async (email, password) => {
     
     if (querySnapshot.empty) {
       // If no document matches the criteria, the user is not a superadmin
+      console.log("User is not a super admin, signing out");
       await auth.signOut(); // Sign out the user
       throw new Error("Not authorized as Super Admin");
+    }
+    
+    return user;
+  } catch (error) {
+    console.error("Authentication error:", error);
+    throw error;
+  }
+};
+
+// Helper function to handle school admin authentication
+export const authenticateSchoolAdmin = async (email, password) => {
+  try {
+    console.log("Authenticating school admin:", email);
+    // Sign in the user
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    console.log("User signed in:", user.uid);
+    
+    // Check if user is a school admin by querying the users collection
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("uid", "==", user.uid));
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      console.log("No user document found for UID:", user.uid);
+      
+      // Create a user document for this user if it doesn't exist
+      console.log("Creating user document for school admin");
+      const userData = {
+        email,
+        uid: user.uid,
+        role: "school_admin",
+        createdAt: new Date().toISOString(),
+      };
+      
+      await setDoc(doc(db, "users", user.uid), userData);
+      console.log("User document created for school admin");
+      
+      // Check if there's a school associated with this email
+      const schoolsRef = collection(db, "schools");
+      const schoolQuery = query(schoolsRef, where("email", "==", email));
+      const schoolSnapshot = await getDocs(schoolQuery);
+      
+      if (schoolSnapshot.empty) {
+        console.log("No school document found for email:", email);
+        await auth.signOut();
+        throw new Error("No school account found for this email");
+      }
+      
+      const schoolData = schoolSnapshot.docs[0].data();
+      if (schoolData.status !== "active") {
+        console.log("School account not active:", schoolData.status);
+        await auth.signOut();
+        throw new Error("Your school account is pending approval");
+      }
+      
+      return user;
+    }
+    
+    const userData = querySnapshot.docs[0].data();
+    console.log("User data found:", userData);
+    
+    if (userData.role !== "school_admin") {
+      console.log("User is not a school admin:", userData.role);
+      await auth.signOut();
+      throw new Error("Not authorized as School Admin");
+    }
+    
+    // Additionally, check if the school is approved
+    if (userData.schoolId) {
+      console.log("Checking school status for ID:", userData.schoolId);
+      const schoolRef = collection(db, "schools");
+      const schoolQuery = query(schoolRef, where("adminId", "==", user.uid));
+      const schoolSnapshot = await getDocs(schoolQuery);
+      
+      if (!schoolSnapshot.empty) {
+        const schoolData = schoolSnapshot.docs[0].data();
+        console.log("School data found:", schoolData);
+        if (schoolData.status !== "active") {
+          console.log("School not active:", schoolData.status);
+          await auth.signOut(); // Sign out if school is not active
+          throw new Error("Your school account is pending approval");
+        }
+      } else {
+        console.log("No school document found for admin ID:", user.uid);
+      }
+    } else {
+      console.log("No school ID found in user data");
     }
     
     return user;
@@ -137,47 +237,6 @@ const scheduleReset = () => {
     // Then set up daily interval
     setInterval(resetTotalFoodNeeded, 24 * 60 * 60 * 1000);
   }, msUntilMidnight);
-};
-
-// Helper function to handle school admin authentication
-export const authenticateSchoolAdmin = async (email, password) => {
-  try {
-    // Sign in the user
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-    
-    // Check if user is a school admin by querying the users collection
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("uid", "==", user.uid), where("role", "==", "school_admin"));
-    const querySnapshot = await getDocs(q);
-    
-    if (querySnapshot.empty) {
-      // If no document matches the criteria, the user is not a school admin
-      await auth.signOut(); // Sign out the user
-      throw new Error("Not authorized as School Admin");
-    }
-    
-    // Additionally, check if the school is approved
-    const userData = querySnapshot.docs[0].data();
-    if (userData.schoolId) {
-      const schoolRef = collection(db, "schools");
-      const schoolQuery = query(schoolRef, where("adminId", "==", user.uid));
-      const schoolSnapshot = await getDocs(schoolQuery);
-      
-      if (!schoolSnapshot.empty) {
-        const schoolData = schoolSnapshot.docs[0].data();
-        if (schoolData.status !== "active") {
-          await auth.signOut(); // Sign out if school is not active
-          throw new Error("Your school account is pending approval");
-        }
-      }
-    }
-    
-    return user;
-  } catch (error) {
-    console.error("Authentication error:", error);
-    throw error;
-  }
 };
 
 // Start the scheduling when the app initializes

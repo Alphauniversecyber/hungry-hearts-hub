@@ -126,11 +126,14 @@ const SchoolRegister = () => {
         totalFoodNeeded: 0 // Initialize with 0
       };
 
+      console.log("Creating school document with data:", schoolData);
+
       // Create school in collection
       const schoolRef = await addDoc(collection(db, "schools"), schoolData);
+      console.log("School document created with ID:", schoolRef.id);
       
       // Also create a user document for this admin
-      await setDoc(doc(db, "users", user.uid), {
+      const userData = {
         name: schoolName,
         email,
         phone: phoneNumber,
@@ -138,7 +141,11 @@ const SchoolRegister = () => {
         uid: user.uid,
         createdAt: new Date().toISOString(),
         schoolId: schoolRef.id
-      });
+      };
+
+      console.log("Creating user document with data:", userData);
+      await setDoc(doc(db, "users", user.uid), userData);
+      console.log("User document created with ID:", user.uid);
 
       toast({
         title: "School registered successfully",
@@ -148,6 +155,8 @@ const SchoolRegister = () => {
       navigate("/admin-login");
     } catch (error: any) {
       let errorMessage = "An error occurred during registration";
+      
+      console.error("School registration error:", error);
       
       if (error.code === "auth/email-already-in-use") {
         errorMessage = "This email is already registered. Please use a different email or login instead.";
@@ -162,8 +171,6 @@ const SchoolRegister = () => {
       } else if (error.message) {
         errorMessage = error.message;
       }
-
-      console.error("School registration error:", error);
       
       toast({
         title: "Registration failed",

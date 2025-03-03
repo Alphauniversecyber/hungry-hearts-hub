@@ -37,6 +37,7 @@ const AdminLogin = () => {
     }
 
     try {
+      console.log("Attempting to authenticate school admin:", email);
       await authenticateSchoolAdmin(email, password);
       
       toast({
@@ -46,6 +47,7 @@ const AdminLogin = () => {
       navigate("/admin");
     } catch (error: any) {
       let errorMessage = "Login failed";
+      console.error("School admin login error:", error);
       
       // Handle specific Firebase auth errors
       switch (error.code) {
