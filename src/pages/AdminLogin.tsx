@@ -9,7 +9,7 @@ import MainNav from "@/components/MainNav";
 import { Loading } from "@/components/ui/loading";
 
 const AdminLogin = () => {
-  const [email, setEmail] = useState("programx010@gmail.com");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -21,27 +21,6 @@ const AdminLogin = () => {
 
     try {
       console.log("Attempting to authenticate school admin:", email);
-      
-      // Check if using the fixed credentials
-      if (email !== "programx010@gmail.com") {
-        toast({
-          title: "Access Denied",
-          description: "Please use the correct school email",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-      
-      if (password !== "puhulwella12345") {
-        toast({
-          title: "Access Denied",
-          description: "Incorrect password",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
       
       await authenticateSchoolAdmin(email, password);
       
@@ -100,8 +79,8 @@ const AdminLogin = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value.trim())}
                 required
-                disabled={true}
-                className="w-full font-oswald bg-gray-100"
+                disabled={isLoading}
+                className="w-full font-oswald"
               />
             </div>
             <div>
