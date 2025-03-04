@@ -6,38 +6,43 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import MainNav from "@/components/MainNav";
-import { Link } from "react-router-dom";
 import { Loading } from "@/components/ui/loading";
 
 const AdminLogin = () => {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("programx010@gmail.com");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Validate email format first
-    if (!validateEmail(email)) {
-      toast({
-        title: "Invalid email",
-        description: "Please enter a valid email address",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-      return;
-    }
-
     try {
       console.log("Attempting to authenticate school admin:", email);
+      
+      // Check if using the fixed credentials
+      if (email !== "programx010@gmail.com") {
+        toast({
+          title: "Access Denied",
+          description: "Please use the correct school email",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      if (password !== "puhulwella12345") {
+        toast({
+          title: "Access Denied",
+          description: "Incorrect password",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+      
       await authenticateSchoolAdmin(email, password);
       
       toast({
@@ -95,8 +100,8 @@ const AdminLogin = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value.trim())}
                 required
-                disabled={isLoading}
-                className="w-full font-oswald"
+                disabled={true}
+                className="w-full font-oswald bg-gray-100"
               />
             </div>
             <div>
@@ -117,19 +122,6 @@ const AdminLogin = () => {
             >
               {isLoading ? "Logging in..." : "Login"}
             </Button>
-            <div className="space-y-2 text-center">
-              <p className="text-sm text-gray-600 font-oswald">
-                Don't have a school account?{" "}
-                <Link to="/school-register" className="text-primary hover:underline">
-                  Register your school
-                </Link>
-              </p>
-              <p className="text-sm text-gray-600 font-oswald">
-                <Link to="/super-admin-login" className="text-primary hover:underline">
-                  Super Admin Login
-                </Link>
-              </p>
-            </div>
           </form>
         </div>
       </div>

@@ -1,56 +1,18 @@
+
 import { NavigationMenu, NavigationMenuList, NavigationMenuItem } from "@/components/ui/navigation-menu";
 import { Link } from "react-router-dom";
 import { auth, db } from "@/lib/firebase";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
 import { Menu, X, User, History, LogOut, Gift, LogIn } from "lucide-react";
-
-interface School {
-  id: string;
-  name: string;
-  address: string;
-}
 
 const MainNav = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const user = auth.currentUser;
-  const [schools, setSchools] = useState<School[]>([]);
-  const [selectedSchool, setSelectedSchool] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const fetchSchools = async () => {
-      const schoolsSnapshot = await getDocs(collection(db, "schools"));
-      const schoolsList = schoolsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as School[];
-      setSchools(schoolsList);
-
-      const savedSchoolId = localStorage.getItem("selectedSchoolId");
-      if (savedSchoolId) {
-        setSelectedSchool(savedSchoolId);
-      }
-    };
-
-    fetchSchools();
-  }, []);
-
-  const handleSchoolSelect = (schoolId: string) => {
-    setSelectedSchool(schoolId);
-    localStorage.setItem("selectedSchoolId", schoolId);
-    const school = schools.find(s => s.id === schoolId);
-    if (school) {
-      localStorage.setItem("selectedSchoolName", school.name);
-      localStorage.setItem("selectedSchoolAddress", school.address);
-    }
-    window.dispatchEvent(new Event('schoolChanged'));
-  };
 
   const handleLogout = async () => {
     try {
@@ -89,19 +51,6 @@ const MainNav = () => {
           </button>
 
           <div className="hidden md:flex items-center gap-6">
-            <Select value={selectedSchool} onValueChange={handleSchoolSelect}>
-              <SelectTrigger className="w-[300px] bg-white">
-                <SelectValue placeholder="Select a school" />
-              </SelectTrigger>
-              <SelectContent>
-                {schools.map((school) => (
-                  <SelectItem key={school.id} value={school.id}>
-                    {school.name} - {school.address}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
             <NavigationMenu>
               <NavigationMenuList className="gap-6">
                 {user ? (
@@ -150,19 +99,6 @@ const MainNav = () => {
 
         {isMenuOpen && (
           <div className="md:hidden mt-4 space-y-4 bg-white rounded-lg p-4 shadow-lg border border-gray-100">
-            <Select value={selectedSchool} onValueChange={handleSchoolSelect}>
-              <SelectTrigger className="w-full bg-white">
-                <SelectValue placeholder="Select a school" />
-              </SelectTrigger>
-              <SelectContent>
-                {schools.map((school) => (
-                  <SelectItem key={school.id} value={school.id}>
-                    {school.name} - {school.address}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
             <div className="flex flex-col space-y-2">
               {user ? (
                 <>
