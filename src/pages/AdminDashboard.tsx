@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -30,30 +30,76 @@ const AdminDashboard = () => {
       }
 
       try {
-        const schoolsRef = collection(db, "schools");
-        const q = query(schoolsRef, where("adminId", "==", user.uid));
-        const querySnapshot = await getDocs(q);
+        // First, get the user document to check if they're a school admin
+        const userDoc = await getDoc(doc(db, "users", user.uid));
         
-        if (!querySnapshot.empty) {
+        if (!userDoc.exists()) {
+          toast({
+            title: "Access denied",
+            description: "You don't have permission to access this dashboard",
+            variant: "destructive",
+          });
+          navigate("/admin-login");
+          return;
+        }
+        
+        const userData = userDoc.data();
+        if (userData.role !== "school_admin") {
+          toast({
+            title: "Access denied",
+            description: "You don't have permission to access this dashboard",
+            variant: "destructive",
+          });
+          navigate("/admin-login");
+          return;
+        }
+        
+        // Get school details using the schoolId from user data
+        const SCHOOL_ID = "puhulwella-national-college";
+        const schoolDoc = await getDoc(doc(db, "schools", SCHOOL_ID));
+        
+        if (schoolDoc.exists()) {
           const schoolData = {
-            id: querySnapshot.docs[0].id,
-            ...querySnapshot.docs[0].data()
+            id: schoolDoc.id,
+            ...schoolDoc.data()
           } as School;
           setSchool(schoolData);
+          console.log("School data loaded:", schoolData);
+        } else {
+          // If school document doesn't exist yet, create a default one
+          console.log("School document not found, using default data");
+          const defaultSchool: School = {
+            id: SCHOOL_ID,
+            name: "Puhulwella National College",
+            email: userData.email,
+            address: "Puhulwella, Sri Lanka",
+            phoneNumber: "0000000000",
+            adminId: user.uid,
+            totalFoodNeeded: 0
+          };
+          setSchool(defaultSchool);
         }
       } catch (error) {
         console.error("Error fetching school data:", error);
+        toast({
+          title: "Error loading dashboard",
+          description: "Please try again later",
+          variant: "destructive",
+        });
       }
     });
 
     return () => checkAdmin();
-  }, [navigate]);
+  }, [navigate, toast]);
 
   useEffect(() => {
     const fetchData = async () => {
       if (!school) return;
 
       try {
+        setLoading(true);
+        console.log("Fetching data for school:", school.id);
+        
         // Fetch food items
         const foodItemsQuery = query(
           collection(db, "foodItems"),
@@ -65,6 +111,7 @@ const AdminDashboard = () => {
           ...doc.data()
         })) as FoodItem[];
         setFoodItems(foodItemsList);
+        console.log("Food items loaded:", foodItemsList.length);
 
         // Get today's start date
         const today = new Date();
@@ -80,11 +127,17 @@ const AdminDashboard = () => {
         const allDonations = await Promise.all(
           donationsSnapshot.docs.map(async doc => {
             const donationData = doc.data();
-            const userDoc = await getDocs(query(
-              collection(db, "users"),
-              where("uid", "==", donationData.userId)
-            ));
-            const userName = userDoc.docs[0]?.data()?.name || "Unknown User";
+            
+            // Try to get user name from users collection
+            let userName = "Unknown User";
+            try {
+              const userDoc = await getDoc(doc(db, "users", donationData.userId));
+              if (userDoc.exists()) {
+                userName = userDoc.data()?.name || "Unknown User";
+              }
+            } catch (error) {
+              console.error("Error fetching user data:", error);
+            }
             
             return {
               id: doc.id,
@@ -107,10 +160,12 @@ const AdminDashboard = () => {
         });
 
         setDonations(todaysDonations);
+        console.log("Today's donations loaded:", todaysDonations.length);
       } catch (error) {
         console.error("Error fetching data:", error);
         toast({
           title: "Error fetching data",
+          description: "Please try again later",
           variant: "destructive",
         });
       } finally {
@@ -144,7 +199,9 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white p-4 sm:p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold font-oswald">School Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold font-oswald">
+            {school?.name || "School"} Dashboard
+          </h1>
           <Button 
             onClick={handleLogout} 
             variant="outline"

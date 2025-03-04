@@ -37,7 +37,7 @@ export const authenticateSchoolAdmin = async (email, password) => {
   try {
     console.log("Authenticating school admin:", email);
     
-    // First, check if the email domain is allowed (for additional security)
+    // School constants
     const SCHOOL_ID = "puhulwella-national-college";
     const SCHOOL_NAME = "Puhulwella National College";
     
@@ -57,6 +57,25 @@ export const authenticateSchoolAdmin = async (email, password) => {
         await signOut(auth); // Sign out the user
         throw new Error("You are not authorized to access this school's dashboard");
       }
+    }
+    
+    // Check if school document exists
+    const schoolRef = doc(db, "schools", SCHOOL_ID);
+    const schoolDoc = await getDoc(schoolRef);
+    
+    if (!schoolDoc.exists()) {
+      // Create school document if it doesn't exist
+      await setDoc(schoolRef, {
+        name: SCHOOL_NAME,
+        email: email,
+        adminId: user.uid,
+        address: "Puhulwella, Sri Lanka",
+        phoneNumber: "0000000000",
+        totalFoodNeeded: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+      console.log("Created new school document:", SCHOOL_ID);
     }
     
     // Add or update user document with school_admin role for Puhulwella National College
@@ -80,17 +99,13 @@ export const authenticateSchoolAdmin = async (email, password) => {
 // Function to reset total food needed for all schools
 const resetTotalFoodNeeded = async () => {
   try {
-    const schoolsRef = collection(db, 'schools');
-    const schoolsSnapshot = await getDocs(schoolsRef);
-    
-    const promises = schoolsSnapshot.docs.map(schoolDoc => {
-      return updateDoc(doc(db, 'schools', schoolDoc.id), {
-        totalFoodNeeded: 0
-      });
+    // For a single school system, just reset the specific school
+    const SCHOOL_ID = "puhulwella-national-college";
+    await updateDoc(doc(db, 'schools', SCHOOL_ID), {
+      totalFoodNeeded: 0
     });
-
-    await Promise.all(promises);
-    console.log('Reset total food needed for all schools at:', new Date().toISOString());
+    
+    console.log('Reset total food needed for school at:', new Date().toISOString());
   } catch (error) {
     console.error('Error resetting total food needed:', error);
   }
