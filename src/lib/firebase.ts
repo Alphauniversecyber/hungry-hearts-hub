@@ -1,7 +1,7 @@
 
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { getFirestore, collection, query, getDocs, updateDoc, doc, setDoc, where, enableIndexedDbPersistence } from 'firebase/firestore';
+import { getFirestore, collection, query, getDocs, updateDoc, doc, setDoc, where, enableIndexedDbPersistence, getDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAqSgN7R9qRo8csE7gznnP4Wlr7zIsVHrg",
@@ -37,19 +37,36 @@ export const authenticateSchoolAdmin = async (email, password) => {
   try {
     console.log("Authenticating school admin:", email);
     
+    // First, check if the email domain is allowed (for additional security)
+    const SCHOOL_ID = "puhulwella-national-college";
+    const SCHOOL_NAME = "Puhulwella National College";
+    
     // Sign in the user with the provided credentials
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    console.log("Staff member signed in:", user.uid);
+    console.log("Staff member authenticated:", user.uid);
+    
+    // Check if user is already in the database and associated with this school
+    const userRef = doc(db, "users", user.uid);
+    const userDoc = await getDoc(userRef);
+    
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      // If user exists but is not associated with this school, throw error
+      if (userData.schoolId && userData.schoolId !== SCHOOL_ID) {
+        await signOut(auth); // Sign out the user
+        throw new Error("You are not authorized to access this school's dashboard");
+      }
+    }
     
     // Add or update user document with school_admin role for Puhulwella National College
-    const userRef = doc(db, "users", user.uid);
     await setDoc(userRef, {
       email,
       uid: user.uid,
       role: "school_admin",
-      schoolName: "Puhulwella National College",
-      schoolId: "puhulwella-national-college", // Fixed school ID for Puhulwella National College
+      schoolName: SCHOOL_NAME,
+      schoolId: SCHOOL_ID,
+      lastLogin: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }, { merge: true });
     
