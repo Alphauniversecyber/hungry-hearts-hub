@@ -26,7 +26,7 @@ const AdminLogin = () => {
       
       toast({
         title: "Login successful",
-        description: "Welcome back to your school dashboard!",
+        description: "Welcome back to Puhulwella National College dashboard!",
       });
       navigate("/admin");
     } catch (error: any) {
@@ -52,7 +52,7 @@ const AdminLogin = () => {
       }
 
       toast({
-        title: "Login failed",
+        title: "Access Denied",
         description: errorMessage,
         variant: "destructive",
       });
@@ -68,14 +68,15 @@ const AdminLogin = () => {
         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md relative overflow-hidden">
           {isLoading && <Loading message="Logging in..." />}
           
-          <h2 className="text-3xl font-oswald font-bold text-gray-900 mb-6 text-center">
-            School Login
+          <h2 className="text-3xl font-oswald font-bold text-gray-900 mb-2 text-center">
+            Puhulwella National College
           </h2>
+          <p className="text-center text-gray-600 mb-6">Staff Login Portal</p>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <Input
                 type="email"
-                placeholder="School Email"
+                placeholder="Staff Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value.trim())}
                 required

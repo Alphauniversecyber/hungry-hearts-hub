@@ -40,16 +40,16 @@ export const authenticateSchoolAdmin = async (email, password) => {
     // Sign in the user with the provided credentials
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    console.log("School admin signed in:", user.uid);
+    console.log("Staff member signed in:", user.uid);
     
-    // Check if the user exists in the 'users' collection with role 'school_admin'
+    // Add or update user document with school_admin role for Puhulwella National College
     const userRef = doc(db, "users", user.uid);
-    
-    // Add or update user document with school_admin role
     await setDoc(userRef, {
       email,
       uid: user.uid,
       role: "school_admin",
+      schoolName: "Puhulwella National College",
+      schoolId: "puhulwella-national-college", // Fixed school ID for Puhulwella National College
       updatedAt: new Date().toISOString(),
     }, { merge: true });
     
