@@ -27,16 +27,6 @@ export const SchoolInfo = ({ school, isAcceptingDonations }: SchoolInfoProps) =>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <p className="font-medium text-gray-700">Name:</p>
-          <p className="font-oswald text-lg">{school.name}</p>
-        </div>
-        
-        <div>
-          <p className="font-medium text-gray-700">Address:</p>
-          <p className="font-oswald">{school.address}</p>
-        </div>
-        
-        <div>
           <p className="font-medium text-gray-700">Contact:</p>
           <p className="font-oswald">{school.phoneNumber || school.phone || "Not available"}</p>
         </div>
