@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import MainNav from "@/components/MainNav";
@@ -19,11 +18,7 @@ const Index = () => {
   }, []);
 
   const handleDonate = () => {
-    const selectedSchoolId = localStorage.getItem("selectedSchoolId");
-    if (!selectedSchoolId) {
-      alert("Please select a school first");
-      return;
-    }
+    localStorage.setItem("selectedSchoolId", "puhulwella-national-college");
     navigate("/donate");
   };
 
@@ -42,14 +37,14 @@ const Index = () => {
           </h2>
           
           <p className="text-lg md:text-xl text-gray-600 max-w-2xl leading-relaxed font-light">
-            Join our mission to ensure no student goes hungry. Together, we can make
-            a lasting difference in our school community.
+            Join our mission to ensure no student goes hungry at Puhulwella National College. 
+            Together, we can make a lasting difference in our school community.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md mt-8">
+          <div className={`grid ${isLoggedIn ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'} gap-4 w-full max-w-md mt-8`}>
             <Button
               onClick={handleDonate}
-              className="h-12 text-lg font-oswald bg-primary hover:bg-primary-600 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+              className={`h-12 text-lg font-oswald bg-primary hover:bg-primary-600 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 ${isLoggedIn ? 'mx-auto w-full sm:w-64' : ''}`}
             >
               Donate Now
               <Heart className="h-5 w-5" />

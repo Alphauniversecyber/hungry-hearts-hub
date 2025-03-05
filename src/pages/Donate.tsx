@@ -24,6 +24,9 @@ const Donate = () => {
   const [school, setSchool] = useState<School | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Default school ID for Puhulwella National College
+  const DEFAULT_SCHOOL_ID = "puhulwella-national-college";
 
   useEffect(() => {
     const checkAuth = auth.onAuthStateChanged((user) => {
@@ -38,15 +41,9 @@ const Donate = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const selectedSchoolId = localStorage.getItem("selectedSchoolId");
-        if (!selectedSchoolId) {
-          toast({
-            title: "No school selected",
-            description: "Please select a school first",
-            variant: "destructive",
-          });
-          return;
-        }
+        // Always set Puhulwella National College as the selected school
+        localStorage.setItem("selectedSchoolId", DEFAULT_SCHOOL_ID);
+        const selectedSchoolId = DEFAULT_SCHOOL_ID;
 
         // Fetch school data
         const schoolDoc = await getDoc(doc(db, "schools", selectedSchoolId));
@@ -54,6 +51,17 @@ const Donate = () => {
           const schoolData = { id: schoolDoc.id, ...schoolDoc.data() } as School;
           setSchool(schoolData);
           localStorage.setItem(`school_${schoolDoc.id}_name`, schoolData.name);
+        } else {
+          // Create default school info if not exists
+          const defaultSchool: School = {
+            id: DEFAULT_SCHOOL_ID,
+            name: "Puhulwella National College",
+            email: "admin@puhulwella.edu",
+            address: "Puhulwella, Sri Lanka",
+            phoneNumber: "0000000000",
+            totalFoodNeeded: 100
+          };
+          setSchool(defaultSchool);
         }
 
         // Query food items for the selected school only
@@ -86,26 +94,17 @@ const Donate = () => {
     fetchData();
   }, [toast]);
 
-  useEffect(() => {
-    const handleSchoolChange = () => {
-      window.location.reload();
-    };
-
-    window.addEventListener('schoolChanged', handleSchoolChange);
-    return () => window.removeEventListener('schoolChanged', handleSchoolChange);
-  }, []);
-
   const isAcceptingDonations = !school?.totalFoodNeeded || school.totalFoodNeeded > 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
       <MainNav />
       <div className="p-4 sm:p-6 md:p-8">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold text-center mb-6 md:mb-8 font-oswald">
-            Donate Food
+            Donate to Puhulwella National College
           </h1>
-          <div className="bg-white p-4 sm:p-6 rounded-lg shadow relative">
+          <div className="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-lg shadow-lg relative border border-primary/10">
             {isLoading && <Loading message="Loading school information..." />}
             {isSubmitting && <Loading message="Submitting donation..." />}
             
