@@ -74,7 +74,7 @@ const AdminDashboard = () => {
             email: userData.email,
             address: "Puhulwella, Sri Lanka",
             phoneNumber: "0000000000",
-            adminId: user.uid,
+            adminId: user.uid, // Now this property is defined in the School type
             totalFoodNeeded: 0
           };
           setSchool(defaultSchool);
@@ -125,22 +125,24 @@ const AdminDashboard = () => {
         
         const donationsSnapshot = await getDocs(donationsQuery);
         const allDonations = await Promise.all(
-          donationsSnapshot.docs.map(async doc => {
-            const donationData = doc.data();
+          donationsSnapshot.docs.map(async docSnapshot => {
+            const donationData = docSnapshot.data();
             
             // Try to get user name from users collection
             let userName = "Unknown User";
             try {
-              const userDoc = await getDoc(doc(db, "users", donationData.userId));
+              const userRef = doc(db, "users", donationData.userId);
+              const userDoc = await getDoc(userRef);
               if (userDoc.exists()) {
-                userName = userDoc.data()?.name || "Unknown User";
+                const userData = userDoc.data();
+                userName = userData?.name || "Unknown User";
               }
             } catch (error) {
               console.error("Error fetching user data:", error);
             }
             
             return {
-              id: doc.id,
+              id: docSnapshot.id,
               userId: donationData.userId,
               foodItemId: donationData.foodItemId,
               quantity: donationData.quantity,

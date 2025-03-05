@@ -1,4 +1,3 @@
-
 export interface School {
   id: string;
   name: string;
@@ -8,6 +7,9 @@ export interface School {
   totalFoodNeeded?: number;
   status?: "active" | "pending" | "rejected";
   phone?: string; // Alternative field name used in the dashboard
+  adminId?: string; // Added adminId which was missing
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface User {
