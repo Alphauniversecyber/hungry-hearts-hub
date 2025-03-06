@@ -139,7 +139,10 @@ export const Donators = ({ schoolId, foodItems }: DonatorsProps) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow space-y-4">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Donators</h2>
+        <h2 className="text-xl font-semibold flex items-center gap-2">
+          <UserIcon className="h-5 w-5" />
+          Donators
+        </h2>
         <Button 
           onClick={downloadDonatorsExcel} 
           disabled={donators.length === 0}
@@ -180,33 +183,35 @@ export const Donators = ({ schoolId, foodItems }: DonatorsProps) => {
           </CardContent>
         </Card>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Total Donations</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredDonators.map((donator) => {
-              const userDonations = donations.filter(d => d.userId === donator.id);
-              return (
-                <TableRow 
-                  key={donator.id}
-                  className="cursor-pointer hover:bg-primary/5"
-                  onClick={() => handleSelectDonator(donator)}
-                >
-                  <TableCell className="font-medium">{donator.name || "Unknown"}</TableCell>
-                  <TableCell>{donator.email || "Unknown"}</TableCell>
-                  <TableCell>{donator.phone || "Unknown"}</TableCell>
-                  <TableCell>{userDonations.length}</TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>Total Donations</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredDonators.map((donator) => {
+                const userDonations = donations.filter(d => d.userId === donator.id);
+                return (
+                  <TableRow 
+                    key={donator.id}
+                    className="cursor-pointer hover:bg-primary/5"
+                    onClick={() => handleSelectDonator(donator)}
+                  >
+                    <TableCell className="font-medium">{donator.name || "Unknown"}</TableCell>
+                    <TableCell>{donator.email || "Unknown"}</TableCell>
+                    <TableCell>{donator.phone || "Unknown"}</TableCell>
+                    <TableCell>{userDonations.length}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );

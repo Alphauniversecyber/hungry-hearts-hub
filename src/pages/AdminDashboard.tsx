@@ -13,7 +13,14 @@ import { SchoolProfile } from "@/components/dashboard/SchoolProfile";
 import { DonationHistory } from "@/components/dashboard/DonationHistory";
 import { Donators } from "@/components/dashboard/Donators";
 import { Loading } from "@/components/ui/loading";
-import { LogOut, Users } from "lucide-react";
+import { 
+  LogOut, 
+  Users, 
+  ClipboardList, 
+  ShoppingBag, 
+  History, 
+  UserCircle 
+} from "lucide-react";
 
 const AdminDashboard = () => {
   const [school, setSchool] = useState<School | null>(null);
@@ -220,34 +227,38 @@ const AdminDashboard = () => {
             <TabsList className="w-full flex flex-wrap justify-start gap-2">
               <TabsTrigger 
                 value="todays-donations"
-                className="flex-1 sm:flex-none text-sm sm:text-base font-oswald"
+                className="flex-1 sm:flex-none text-sm sm:text-base font-oswald flex items-center gap-2"
               >
-                Today's Donations
+                <ClipboardList className="h-4 w-4" />
+                <span>Today's Donations</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="food-items"
-                className="flex-1 sm:flex-none text-sm sm:text-base font-oswald"
+                className="flex-1 sm:flex-none text-sm sm:text-base font-oswald flex items-center gap-2"
               >
-                Food Items
+                <ShoppingBag className="h-4 w-4" />
+                <span>Food Items</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="history"
-                className="flex-1 sm:flex-none text-sm sm:text-base font-oswald"
+                className="flex-1 sm:flex-none text-sm sm:text-base font-oswald flex items-center gap-2"
               >
-                Donation History
+                <History className="h-4 w-4" />
+                <span>Donation History</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="donators"
-                className="flex-1 sm:flex-none text-sm sm:text-base font-oswald"
+                className="flex-1 sm:flex-none text-sm sm:text-base font-oswald flex items-center gap-2"
               >
-                <Users className="h-4 w-4 mr-2" />
-                Donators
+                <Users className="h-4 w-4" />
+                <span>Donators</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="profile"
-                className="flex-1 sm:flex-none text-sm sm:text-base font-oswald"
+                className="flex-1 sm:flex-none text-sm sm:text-base font-oswald flex items-center gap-2"
               >
-                Profile
+                <UserCircle className="h-4 w-4" />
+                <span>Profile</span>
               </TabsTrigger>
             </TabsList>
           </div>
