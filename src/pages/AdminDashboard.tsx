@@ -11,8 +11,9 @@ import { TodaysDonations } from "@/components/dashboard/TodaysDonations";
 import { FoodItems } from "@/components/dashboard/FoodItems";
 import { SchoolProfile } from "@/components/dashboard/SchoolProfile";
 import { DonationHistory } from "@/components/dashboard/DonationHistory";
+import { Donators } from "@/components/dashboard/Donators";
 import { Loading } from "@/components/ui/loading";
-import { LogOut } from "lucide-react";
+import { LogOut, Users } from "lucide-react";
 
 const AdminDashboard = () => {
   const [school, setSchool] = useState<School | null>(null);
@@ -236,6 +237,13 @@ const AdminDashboard = () => {
                 Donation History
               </TabsTrigger>
               <TabsTrigger 
+                value="donators"
+                className="flex-1 sm:flex-none text-sm sm:text-base font-oswald"
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Donators
+              </TabsTrigger>
+              <TabsTrigger 
                 value="profile"
                 className="flex-1 sm:flex-none text-sm sm:text-base font-oswald"
               >
@@ -264,6 +272,15 @@ const AdminDashboard = () => {
             <TabsContent value="history" className="mt-0">
               {school && (
                 <DonationHistory
+                  schoolId={school.id}
+                  foodItems={foodItems}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="donators" className="mt-0">
+              {school && (
+                <Donators
                   schoolId={school.id}
                   foodItems={foodItems}
                 />

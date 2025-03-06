@@ -1,3 +1,4 @@
+
 export interface School {
   id: string;
   name: string;
@@ -14,12 +15,14 @@ export interface School {
 
 export interface User {
   id: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: string;
-  createdAt: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  createdAt?: string;
+  updatedAt?: string;
   schoolId?: string;
+  uid?: string;
 }
 
 export interface Donation {
@@ -31,6 +34,7 @@ export interface Donation {
   createdAt: string;
   userName?: string;
   schoolId: string;
+  status?: string;
 }
 
 export interface FoodItem {
