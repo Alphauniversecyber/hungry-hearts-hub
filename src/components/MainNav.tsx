@@ -6,13 +6,34 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
-import { Menu, X, User, History, LogOut, Gift, LogIn } from "lucide-react";
+import { Menu, X, User, History, LogOut, Gift, LogIn, LayoutDashboard, Apple } from "lucide-react";
+import { doc, getDoc } from "firebase/firestore";
 
 const MainNav = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const user = auth.currentUser;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (userDoc.exists()) {
+            setUserRole(userDoc.data().role || null);
+          }
+        } catch (error) {
+          console.error("Error fetching user role:", error);
+        }
+      } else {
+        setUserRole(null);
+      }
+    };
+
+    fetchUserRole();
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -34,12 +55,15 @@ const MainNav = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  const isAdmin = userRole === "school_admin";
+
   return (
     <nav className="border-b bg-white/95 backdrop-blur-md sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="text-2xl font-display font-semibold text-primary-600 hover:text-primary-700 transition-colors">
-            FeedNet
+          <Link to="/" className="text-2xl font-display font-semibold text-primary-600 hover:text-primary-700 transition-colors flex items-center gap-2">
+            <Apple size={28} className="text-primary-600" />
+            <span className="font-bold">FeedNet</span>
           </Link>
 
           <button
@@ -55,6 +79,14 @@ const MainNav = () => {
               <NavigationMenuList className="gap-6">
                 {user ? (
                   <>
+                    {isAdmin && (
+                      <NavigationMenuItem>
+                        <Link to="/admin" className="nav-link flex items-center gap-2">
+                          <LayoutDashboard size={18} className="text-gray-500" />
+                          Dashboard
+                        </Link>
+                      </NavigationMenuItem>
+                    )}
                     <NavigationMenuItem>
                       <Link to="/donate" className="nav-link flex items-center gap-2">
                         <Gift size={18} className="text-gray-500" />
@@ -102,6 +134,16 @@ const MainNav = () => {
             <div className="flex flex-col space-y-2">
               {user ? (
                 <>
+                  {isAdmin && (
+                    <Link 
+                      to="/admin" 
+                      className="nav-link p-2 hover:bg-gray-50 rounded-md flex items-center gap-2"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <LayoutDashboard size={18} className="text-gray-500" />
+                      Dashboard
+                    </Link>
+                  )}
                   <Link 
                     to="/donate" 
                     className="nav-link p-2 hover:bg-gray-50 rounded-md flex items-center gap-2"
