@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -5,6 +6,7 @@ import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import MainNav from "@/components/MainNav";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -36,56 +38,59 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-teal-50 to-white">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 className="text-3xl font-heading font-bold text-gray-900 mb-6 text-center">
-          User Login
-        </h2>
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
+      <MainNav />
+      <div className="container mx-auto px-4 py-8 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+          <h2 className="text-3xl font-heading font-bold text-gray-900 mb-6 text-center">
+            User Login
+          </h2>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isLoading}
+                className="w-full"
+              />
+            </div>
+            <div>
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={isLoading}
+                className="w-full"
+              />
+            </div>
+            <Button 
+              type="submit" 
+              className="w-full bg-primary hover:bg-primary/90"
               disabled={isLoading}
-              className="w-full"
-            />
-          </div>
-          <div>
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isLoading}
-              className="w-full"
-            />
-          </div>
-          <Button 
-            type="submit" 
-            className="w-full bg-primary hover:bg-primary/90"
-            disabled={isLoading}
-          >
-            {isLoading ? "Logging in..." : "Login"}
-          </Button>
-          <div className="text-center mt-4">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{" "}
-              <Link to="/register" className="text-primary hover:underline">
-                Sign up
-              </Link>
-            </p>
-            <p className="text-sm text-gray-600 mt-2">
-              Are you an admin?{" "}
-              <Link to="/admin-login" className="text-primary hover:underline">
-                Admin Login
-              </Link>
-            </p>
-          </div>
-        </form>
+            >
+              {isLoading ? "Logging in..." : "Login"}
+            </Button>
+            <div className="text-center mt-4">
+              <p className="text-sm text-gray-600">
+                Don't have an account?{" "}
+                <Link to="/register" className="text-primary hover:underline">
+                  Sign up
+                </Link>
+              </p>
+              <p className="text-sm text-gray-600 mt-2">
+                Are you an admin?{" "}
+                <Link to="/admin-login" className="text-primary hover:underline">
+                  Admin Login
+                </Link>
+              </p>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
