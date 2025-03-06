@@ -7,11 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import MainNav from "@/components/MainNav";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { KeyRound, Save, User } from "lucide-react";
+import { sendPasswordResetEmail } from "firebase/auth";
 
 const Profile = () => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [passwordResetLoading, setPasswordResetLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const user = auth.currentUser;
@@ -79,60 +83,122 @@ const Profile = () => {
     }
   };
 
+  const handleSendPasswordReset = async () => {
+    if (!user?.email) {
+      toast({
+        title: "Cannot reset password",
+        description: "Your account doesn't have an email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setPasswordResetLoading(true);
+      await sendPasswordResetEmail(auth, user.email);
+      toast({
+        title: "Password reset email sent",
+        description: `A password reset link has been sent to ${user.email}`,
+      });
+    } catch (error: any) {
+      console.error("Error sending password reset:", error);
+      toast({
+        title: "Failed to send password reset",
+        description: error.message || "Please try again later",
+        variant: "destructive",
+      });
+    } finally {
+      setPasswordResetLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
       <MainNav />
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow">
-          <h1 className="text-2xl font-bold mb-6">Edit Profile</h1>
-          <form onSubmit={handleUpdateProfile} className="space-y-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Full Name
-              </label>
-              <Input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <Input
-                id="email"
-                type="email"
-                value={user?.email || ""}
-                disabled
-                className="bg-gray-50"
-              />
-              <p className="text-sm text-gray-500 mt-1">Email cannot be changed</p>
-            </div>
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                Phone Number
-              </label>
-              <Input
-                id="phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <Button
-              type="submit"
-              className="w-full bg-primary hover:bg-primary/90"
-              disabled={isLoading}
-            >
-              {isLoading ? "Saving..." : "Save Changes"}
-            </Button>
-          </form>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card className="md:col-span-1">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Edit Profile
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleUpdateProfile} className="space-y-4">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                    Full Name
+                  </label>
+                  <Input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                    Email
+                  </label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={user?.email || ""}
+                    disabled
+                    className="bg-gray-50"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">Email cannot be changed</p>
+                </div>
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                    Phone Number
+                  </label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full flex items-center gap-2"
+                  disabled={isLoading}
+                >
+                  <Save className="h-4 w-4" />
+                  {isLoading ? "Saving..." : "Save Changes"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card className="md:col-span-1">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <KeyRound className="h-5 w-5" />
+                Password Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Need to reset your password? Click the button below to receive a password reset link via email.
+              </p>
+              <Button
+                onClick={handleSendPasswordReset}
+                disabled={passwordResetLoading || !user?.email}
+                className="w-full flex items-center gap-2"
+                variant="outline"
+              >
+                <KeyRound className="h-4 w-4" />
+                {passwordResetLoading ? "Sending..." : "Send Password Reset Email"}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
