@@ -38,11 +38,18 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white">
       <MainNav />
       <div className="container mx-auto px-4 py-8 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-          <h2 className="text-3xl font-heading font-bold text-gray-900 mb-6 text-center">
+        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md border border-primary/10">
+          <div className="flex justify-center mb-6">
+            <img 
+              src="/lovable-uploads/fec8b2a5-5943-4a3d-8fa1-4bec244ff4ff.png" 
+              alt="Puhulwella National College" 
+              className="h-16 w-16 object-contain" 
+            />
+          </div>
+          <h2 className="text-3xl font-heading font-bold text-primary mb-6 text-center">
             User Login
           </h2>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -70,7 +77,7 @@ const Login = () => {
             </div>
             <Button 
               type="submit" 
-              className="w-full bg-primary hover:bg-primary/90"
+              className="w-full bg-primary hover:bg-primary-700"
               disabled={isLoading}
             >
               {isLoading ? "Logging in..." : "Login"}

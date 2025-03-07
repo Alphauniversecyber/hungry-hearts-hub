@@ -36,6 +36,10 @@
     --ring: 222.2 84% 4.9%;
 
     --radius: 0.75rem;
+    
+    /* School logo color palette */
+    --school-red: 0 100% 30%;
+    --school-gold: 46 65% 52%;
   }
 
   .dark {
@@ -86,10 +90,16 @@
     @apply text-gray-600 hover:text-primary transition-colors duration-200 font-medium;
   }
   .btn-primary {
-    @apply bg-primary hover:bg-primary-600 text-white font-medium px-6 py-2.5 rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md;
+    @apply bg-primary hover:bg-primary-700 text-white font-medium px-6 py-2.5 rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md;
   }
   .card-shadow {
     @apply shadow-[0_4px_12px_-2px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_16px_-4px_rgba(0,0,0,0.1)] transition-shadow duration-200;
+  }
+  .school-gradient {
+    @apply bg-gradient-to-r from-primary to-primary-700;
+  }
+  .school-card {
+    @apply bg-white/90 border border-primary/10 rounded-lg shadow-md hover:shadow-lg transition-all duration-200;
   }
 }
 
@@ -104,5 +114,5 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded-full hover:bg-gray-400 transition-colors;
+  @apply bg-primary/30 rounded-full hover:bg-primary/50 transition-colors;
 }

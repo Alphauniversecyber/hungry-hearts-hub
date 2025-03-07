@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
-import { Menu, X, User, History, LogOut, Gift, LogIn, LayoutDashboard, Apple } from "lucide-react";
+import { Menu, X, User, History, LogOut, Gift, LogIn, LayoutDashboard } from "lucide-react";
 import { doc, getDoc } from "firebase/firestore";
 
 const MainNav = () => {
@@ -61,14 +61,18 @@ const MainNav = () => {
     <nav className="border-b bg-white/95 backdrop-blur-md sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="text-2xl font-display font-semibold text-primary-600 hover:text-primary-700 transition-colors flex items-center gap-2">
-            <Apple size={28} className="text-primary-600" />
+          <Link to="/" className="text-2xl font-display font-semibold text-primary hover:text-primary-700 transition-colors flex items-center gap-2">
+            <img 
+              src="/lovable-uploads/fec8b2a5-5943-4a3d-8fa1-4bec244ff4ff.png" 
+              alt="Puhulwella National College" 
+              className="h-8 w-8 object-contain" 
+            />
             <span className="font-bold">FeedNet</span>
           </Link>
 
           <button
             onClick={toggleMenu}
-            className="md:hidden p-2 text-gray-600 hover:text-primary-600 transition-colors"
+            className="md:hidden p-2 text-gray-600 hover:text-primary transition-colors"
             aria-label="Toggle menu"
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -82,26 +86,26 @@ const MainNav = () => {
                     {isAdmin && (
                       <NavigationMenuItem>
                         <Link to="/admin" className="nav-link flex items-center gap-2">
-                          <LayoutDashboard size={18} className="text-gray-500" />
+                          <LayoutDashboard size={18} className="text-primary-700" />
                           Dashboard
                         </Link>
                       </NavigationMenuItem>
                     )}
                     <NavigationMenuItem>
                       <Link to="/donate" className="nav-link flex items-center gap-2">
-                        <Gift size={18} className="text-gray-500" />
+                        <Gift size={18} className="text-primary-700" />
                         Donate
                       </Link>
                     </NavigationMenuItem>
                     <NavigationMenuItem>
                       <Link to="/history" className="nav-link flex items-center gap-2">
-                        <History size={18} className="text-gray-500" />
+                        <History size={18} className="text-primary-700" />
                         History
                       </Link>
                     </NavigationMenuItem>
                     <NavigationMenuItem>
                       <Link to="/profile" className="nav-link flex items-center gap-2">
-                        <User size={18} className="text-gray-500" />
+                        <User size={18} className="text-primary-700" />
                         Profile
                       </Link>
                     </NavigationMenuItem>
@@ -109,9 +113,9 @@ const MainNav = () => {
                       <Button 
                         variant="ghost" 
                         onClick={handleLogout}
-                        className="nav-link hover:bg-gray-100 flex items-center gap-2"
+                        className="nav-link hover:bg-primary-50 flex items-center gap-2"
                       >
-                        <LogOut size={18} className="text-gray-500" />
+                        <LogOut size={18} className="text-primary-700" />
                         Logout
                       </Button>
                     </NavigationMenuItem>
@@ -119,7 +123,7 @@ const MainNav = () => {
                 ) : (
                   <NavigationMenuItem>
                     <Link to="/login" className="nav-link flex items-center gap-2">
-                      <LogIn size={18} className="text-gray-500" />
+                      <LogIn size={18} className="text-primary-700" />
                       Sign In
                     </Link>
                   </NavigationMenuItem>
@@ -137,35 +141,35 @@ const MainNav = () => {
                   {isAdmin && (
                     <Link 
                       to="/admin" 
-                      className="nav-link p-2 hover:bg-gray-50 rounded-md flex items-center gap-2"
+                      className="nav-link p-2 hover:bg-primary-50 rounded-md flex items-center gap-2"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <LayoutDashboard size={18} className="text-gray-500" />
+                      <LayoutDashboard size={18} className="text-primary-700" />
                       Dashboard
                     </Link>
                   )}
                   <Link 
                     to="/donate" 
-                    className="nav-link p-2 hover:bg-gray-50 rounded-md flex items-center gap-2"
+                    className="nav-link p-2 hover:bg-primary-50 rounded-md flex items-center gap-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <Gift size={18} className="text-gray-500" />
+                    <Gift size={18} className="text-primary-700" />
                     Donate
                   </Link>
                   <Link 
                     to="/history" 
-                    className="nav-link p-2 hover:bg-gray-50 rounded-md flex items-center gap-2"
+                    className="nav-link p-2 hover:bg-primary-50 rounded-md flex items-center gap-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <History size={18} className="text-gray-500" />
+                    <History size={18} className="text-primary-700" />
                     History
                   </Link>
                   <Link 
                     to="/profile" 
-                    className="nav-link p-2 hover:bg-gray-50 rounded-md flex items-center gap-2"
+                    className="nav-link p-2 hover:bg-primary-50 rounded-md flex items-center gap-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <User size={18} className="text-gray-500" />
+                    <User size={18} className="text-primary-700" />
                     Profile
                   </Link>
                   <Button 
@@ -174,19 +178,19 @@ const MainNav = () => {
                       handleLogout();
                       setIsMenuOpen(false);
                     }}
-                    className="nav-link w-full justify-start p-2 hover:bg-gray-50 flex items-center gap-2"
+                    className="nav-link w-full justify-start p-2 hover:bg-primary-50 flex items-center gap-2"
                   >
-                    <LogOut size={18} className="text-gray-500" />
+                    <LogOut size={18} className="text-primary-700" />
                     Logout
                   </Button>
                 </>
               ) : (
                 <Link 
                   to="/login" 
-                  className="nav-link p-2 hover:bg-gray-50 rounded-md flex items-center gap-2"
+                  className="nav-link p-2 hover:bg-primary-50 rounded-md flex items-center gap-2"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <LogIn size={18} className="text-gray-500" />
+                  <LogIn size={18} className="text-primary-700" />
                   Sign In
                 </Link>
               )}
