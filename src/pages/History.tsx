@@ -19,7 +19,7 @@ const History = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white">
       <MainNav />
       <div className="container mx-auto p-8">
         <h1 className="text-3xl font-bold text-center mb-8">Donation History</h1>

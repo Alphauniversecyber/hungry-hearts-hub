@@ -97,7 +97,7 @@ const Donate = () => {
   const isAcceptingDonations = !school?.totalFoodNeeded || school.totalFoodNeeded > 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white">
       <MainNav />
       <div className="p-4 sm:p-6 md:p-8">
         <div className="max-w-3xl mx-auto">

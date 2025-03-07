@@ -64,10 +64,10 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white">
       <MainNav />
       <div className="flex items-center justify-center p-8">
-        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md relative overflow-hidden">
+        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md relative overflow-hidden border border-primary/10">
           {isLoading && <Loading message="Logging in..." />}
           
           <div className="flex items-center justify-center mb-4">

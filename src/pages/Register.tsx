@@ -119,10 +119,10 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white">
       <MainNav />
       <div className="flex items-center justify-center p-8">
-        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md border border-primary/10">
           <h2 className="text-3xl font-heading font-bold text-gray-900 mb-6 text-center">
             Register as Donor
           </h2>

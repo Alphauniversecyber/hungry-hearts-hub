@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
@@ -38,7 +37,6 @@ const AdminDashboard = () => {
       }
 
       try {
-        // First, get the user document to check if they're a school admin
         const userDoc = await getDoc(doc(db, "users", user.uid));
         
         if (!userDoc.exists()) {
@@ -62,7 +60,6 @@ const AdminDashboard = () => {
           return;
         }
         
-        // Get school details using the schoolId from user data
         const SCHOOL_ID = "puhulwella-national-college";
         const schoolDoc = await getDoc(doc(db, "schools", SCHOOL_ID));
         
@@ -74,7 +71,6 @@ const AdminDashboard = () => {
           setSchool(schoolData);
           console.log("School data loaded:", schoolData);
         } else {
-          // If school document doesn't exist yet, create a default one
           console.log("School document not found, using default data");
           const defaultSchool: School = {
             id: SCHOOL_ID,
@@ -82,7 +78,7 @@ const AdminDashboard = () => {
             email: userData.email,
             address: "Puhulwella, Sri Lanka",
             phoneNumber: "0000000000",
-            adminId: user.uid, // Now this property is defined in the School type
+            adminId: user.uid,
             totalFoodNeeded: 0
           };
           setSchool(defaultSchool);
@@ -108,7 +104,6 @@ const AdminDashboard = () => {
         setLoading(true);
         console.log("Fetching data for school:", school.id);
         
-        // Fetch food items
         const foodItemsQuery = query(
           collection(db, "foodItems"),
           where("schoolId", "==", school.id)
@@ -121,11 +116,9 @@ const AdminDashboard = () => {
         setFoodItems(foodItemsList);
         console.log("Food items loaded:", foodItemsList.length);
 
-        // Get today's start date
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // Get today's donations
         const donationsQuery = query(
           collection(db, "donations"),
           where("schoolId", "==", school.id)
@@ -136,7 +129,6 @@ const AdminDashboard = () => {
           donationsSnapshot.docs.map(async docSnapshot => {
             const donationData = docSnapshot.data();
             
-            // Try to get user name from users collection
             let userName = "Unknown User";
             try {
               const userRef = doc(db, "users", donationData.userId);
@@ -163,7 +155,6 @@ const AdminDashboard = () => {
           })
         );
 
-        // Filter today's donations client-side
         const todaysDonations = allDonations.filter(donation => {
           const donationDate = new Date(donation.createdAt);
           return donationDate >= today && donationDate.getDate() === today.getDate();
@@ -206,7 +197,7 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white p-4 sm:p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold font-oswald">
@@ -223,7 +214,7 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="todays-donations" className="space-y-6">
-          <div className="bg-white rounded-lg shadow-sm p-2">
+          <div className="bg-white rounded-lg shadow-sm p-2 border border-primary/10">
             <TabsList className="w-full flex flex-wrap justify-start gap-2">
               <TabsTrigger 
                 value="todays-donations"
@@ -263,7 +254,7 @@ const AdminDashboard = () => {
             </TabsList>
           </div>
 
-          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-primary/10">
             <TabsContent value="todays-donations" className="mt-0">
               <TodaysDonations donations={donations} foodItems={foodItems} />
             </TabsContent>
