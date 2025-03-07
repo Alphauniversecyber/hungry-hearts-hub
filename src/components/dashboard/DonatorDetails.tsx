@@ -33,7 +33,7 @@ import {
   Shield 
 } from "lucide-react";
 import { Donation, FoodItem, User as UserType } from "@/types/school";
-import { sendPasswordResetEmail } from "firebase/auth";
+import { sendPasswordResetEmail, deleteUser, getAuth } from "firebase/auth";
 
 interface DonatorDetailsProps {
   donator: UserType;
@@ -113,12 +113,40 @@ export const DonatorDetails = ({ donator, donations, foodItems, onClose }: Donat
     try {
       setDeleteLoading(true);
       
-      // Delete user document
+      // Check if we have admin access to delete users
+      const adminAuth = getAuth();
+      const currentUser = adminAuth.currentUser;
+      
+      if (!currentUser) {
+        throw new Error("Admin not authenticated");
+      }
+      
+      // 1. Delete user document from Firestore
       const userRef = doc(db, "users", donator.id);
       await deleteDoc(userRef);
       
-      // Optional: delete all donations made by this user
-      // This would require batch operations for large datasets
+      // 2. Delete user from Firebase Authentication
+      // This requires Firebase Admin SDK, which we can't use directly from client
+      // Instead, we'll make a custom Firebase function call that can delete users
+      const deleteUserUrl = `https://us-central1-food-management-system-e3e10.cloudfunctions.net/deleteUser`;
+      
+      // Call the Firebase function to delete the user from Authentication
+      const response = await fetch(deleteUserUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          uid: donator.id,
+          // Include an ID token to authenticate the admin
+          adminToken: await currentUser.getIdToken()
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete user authentication");
+      }
       
       toast({
         title: "Account deleted",
@@ -130,7 +158,7 @@ export const DonatorDetails = ({ donator, donations, foodItems, onClose }: Donat
       console.error("Error deleting account:", error);
       toast({
         title: "Delete failed",
-        description: "Failed to delete the donator account",
+        description: "Failed to delete the donator account. The user record has been removed, but you may need to contact Firebase support to completely remove their authentication.",
         variant: "destructive",
       });
     } finally {

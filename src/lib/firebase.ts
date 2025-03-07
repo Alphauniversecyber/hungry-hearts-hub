@@ -1,7 +1,6 @@
-
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { getFirestore, collection, query, getDocs, updateDoc, doc, setDoc, where, enableIndexedDbPersistence, getDoc } from 'firebase/firestore';
+import { getFirestore, collection, query, getDocs, updateDoc, doc, setDoc, where, enableIndexedDbPersistence, getDoc, deleteDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAqSgN7R9qRo8csE7gznnP4Wlr7zIsVHrg",
@@ -31,6 +30,52 @@ enableIndexedDbPersistence(db)
       console.warn("The current browser does not support all of the features required to enable persistence");
     }
   });
+
+// Helper function to delete a user completely
+export const deleteUserCompletely = async (uid) => {
+  try {
+    // 1. Delete user document from Firestore
+    await deleteDoc(doc(db, "users", uid));
+    
+    // 2. Attempt to call the Firebase function to delete from Authentication
+    // This is a placeholder - will only work after you create and deploy the cloud function
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("Not authenticated");
+    }
+    
+    const idToken = await currentUser.getIdToken();
+    const functionUrl = `https://us-central1-food-management-system-e3e10.cloudfunctions.net/deleteUser`;
+    
+    try {
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          uid: uid,
+          adminToken: idToken
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete auth user');
+      }
+      
+      return { success: true, message: "User completely deleted" };
+    } catch (authError) {
+      console.error("Error deleting auth user:", authError);
+      return { 
+        success: false, 
+        message: "User document deleted but auth record remains. Please implement the Firebase function for complete deletion."
+      };
+    }
+  } catch (error) {
+    console.error("Error in deleteUserCompletely:", error);
+    throw error;
+  }
+};
 
 // Helper function to handle school admin authentication
 export const authenticateSchoolAdmin = async (email, password) => {

@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, deleteUserCompletely } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
@@ -31,7 +30,6 @@ export const Donators = ({ schoolId, foodItems }: DonatorsProps) => {
   const fetchDonators = async () => {
     try {
       setLoading(true);
-      // First get all donations for this school
       const donationsQuery = query(
         collection(db, "donations"),
         where("schoolId", "==", schoolId)
@@ -44,10 +42,8 @@ export const Donators = ({ schoolId, foodItems }: DonatorsProps) => {
       })) as Donation[];
       setDonations(donationsData);
       
-      // Extract unique donator IDs
       const donatorIds = [...new Set(donationsData.map(donation => donation.userId))];
       
-      // Fetch details for each donator
       const donatorPromises = donatorIds.map(async (id) => {
         try {
           const userDoc = await getDoc(doc(db, "users", id));
@@ -95,6 +91,7 @@ export const Donators = ({ schoolId, foodItems }: DonatorsProps) => {
 
   const handleCloseDetails = () => {
     setSelectedDonator(null);
+    fetchDonators();
   };
 
   const downloadDonatorsExcel = () => {
