@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { doc, updateDoc, deleteDoc } from "firebase/firestore";
-import { db, auth } from "@/lib/firebase";
+import { db, auth, deleteUserCompletely } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,10 +29,12 @@ import {
   X, 
   KeyRound, 
   Trash, 
-  Shield 
+  Shield,
+  Loader
 } from "lucide-react";
 import { Donation, FoodItem, User as UserType } from "@/types/school";
-import { sendPasswordResetEmail, deleteUser, getAuth } from "firebase/auth";
+import { sendPasswordResetEmail, getAuth } from "firebase/auth";
+import { Loading } from "@/components/ui/loading";
 
 interface DonatorDetailsProps {
   donator: UserType;
@@ -113,52 +114,22 @@ export const DonatorDetails = ({ donator, donations, foodItems, onClose }: Donat
     try {
       setDeleteLoading(true);
       
-      // Check if we have admin access to delete users
-      const adminAuth = getAuth();
-      const currentUser = adminAuth.currentUser;
+      const result = await deleteUserCompletely(donator.id);
       
-      if (!currentUser) {
-        throw new Error("Admin not authenticated");
+      if (result.success) {
+        toast({
+          title: "Account deleted",
+          description: result.message || "The donator account has been permanently deleted",
+        });
+        onClose();
+      } else {
+        throw new Error(result.message || "Failed to delete user");
       }
-      
-      // 1. Delete user document from Firestore
-      const userRef = doc(db, "users", donator.id);
-      await deleteDoc(userRef);
-      
-      // 2. Delete user from Firebase Authentication
-      // This requires Firebase Admin SDK, which we can't use directly from client
-      // Instead, we'll make a custom Firebase function call that can delete users
-      const deleteUserUrl = `https://us-central1-food-management-system-e3e10.cloudfunctions.net/deleteUser`;
-      
-      // Call the Firebase function to delete the user from Authentication
-      const response = await fetch(deleteUserUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          uid: donator.id,
-          // Include an ID token to authenticate the admin
-          adminToken: await currentUser.getIdToken()
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to delete user authentication");
-      }
-      
-      toast({
-        title: "Account deleted",
-        description: "The donator account has been permanently deleted",
-      });
-      
-      onClose(); // Return to the donators list
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting account:", error);
       toast({
         title: "Delete failed",
-        description: "Failed to delete the donator account. The user record has been removed, but you may need to contact Firebase support to completely remove their authentication.",
+        description: error.message || "Failed to delete the donator account",
         variant: "destructive",
       });
     } finally {
@@ -167,7 +138,6 @@ export const DonatorDetails = ({ donator, donations, foodItems, onClose }: Donat
   };
 
   const downloadDonationHistory = () => {
-    // Prepare CSV data
     const headers = ["Date", "Food Item", "Quantity", "Note"];
     const data = donations.map(donation => {
       const foodItem = foodItems.find(item => item.id === donation.foodItemId);
@@ -184,7 +154,6 @@ export const DonatorDetails = ({ donator, donations, foodItems, onClose }: Donat
       ...data.map(row => row.join(","))
     ].join("\n");
 
-    // Create and trigger download
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -199,6 +168,10 @@ export const DonatorDetails = ({ donator, donations, foodItems, onClose }: Donat
   const sortedDonations = [...donations].sort((a, b) => {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
+
+  if (deleteLoading) {
+    return <Loading message="Deleting account..." />;
+  }
 
   return (
     <div className="bg-white p-3 sm:p-6 rounded-lg shadow space-y-4 sm:space-y-6">
@@ -230,7 +203,7 @@ export const DonatorDetails = ({ donator, donations, foodItems, onClose }: Donat
             disabled={passwordResetLoading || !donator.email}
             className="flex items-center gap-2"
           >
-            <KeyRound className="h-4 w-4" />
+            {passwordResetLoading ? <Loader className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
             Reset Password
           </Button>
           
@@ -258,7 +231,8 @@ export const DonatorDetails = ({ donator, donations, foodItems, onClose }: Donat
                   disabled={deleteLoading}
                   className="bg-destructive hover:bg-destructive/90"
                 >
-                  {deleteLoading ? "Deleting..." : "Delete Account"}
+                  {deleteLoading ? <Loader className="h-4 w-4 animate-spin mr-2" /> : <Trash className="h-4 w-4 mr-2" />}
+                  Delete Account
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -435,7 +409,7 @@ export const DonatorDetails = ({ donator, donations, foodItems, onClose }: Donat
                   disabled={passwordResetLoading || !donator.email}
                   className="flex items-center gap-2"
                 >
-                  <KeyRound className="h-4 w-4" />
+                  {passwordResetLoading ? <Loader className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
                   Send Password Reset Email
                 </Button>
               </div>
@@ -469,7 +443,8 @@ export const DonatorDetails = ({ donator, donations, foodItems, onClose }: Donat
                         disabled={deleteLoading}
                         className="bg-destructive hover:bg-destructive/90"
                       >
-                        {deleteLoading ? "Deleting..." : "Delete Account"}
+                        {deleteLoading ? <Loader className="h-4 w-4 animate-spin mr-2" /> : <Trash className="h-4 w-4 mr-2" />}
+                        Delete Account
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

@@ -1,6 +1,19 @@
+
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { getFirestore, collection, query, getDocs, updateDoc, doc, setDoc, where, enableIndexedDbPersistence, getDoc, deleteDoc } from 'firebase/firestore';
+import { 
+  getFirestore, 
+  collection, 
+  query, 
+  getDocs, 
+  updateDoc, 
+  doc, 
+  setDoc, 
+  where, 
+  enableIndexedDbPersistence, 
+  getDoc, 
+  deleteDoc 
+} from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAqSgN7R9qRo8csE7gznnP4Wlr7zIsVHrg",
@@ -34,41 +47,74 @@ enableIndexedDbPersistence(db)
 // Helper function to delete a user completely
 export const deleteUserCompletely = async (uid) => {
   try {
-    // 1. Delete user document from Firestore
-    await deleteDoc(doc(db, "users", uid));
+    console.log("Starting user deletion process for:", uid);
     
-    // 2. Attempt to call the Firebase function to delete from Authentication
-    // This is a placeholder - will only work after you create and deploy the cloud function
+    // 1. Delete all donations made by this user
+    const donationsQuery = query(collection(db, "donations"), where("userId", "==", uid));
+    const donationsSnapshot = await getDocs(donationsQuery);
+    
+    const deleteDonationsPromises = donationsSnapshot.docs.map(donationDoc => 
+      deleteDoc(doc(db, "donations", donationDoc.id))
+    );
+    
+    await Promise.all(deleteDonationsPromises);
+    console.log(`Deleted ${donationsSnapshot.docs.length} donations for user:`, uid);
+    
+    // 2. Delete user document from Firestore
+    await deleteDoc(doc(db, "users", uid));
+    console.log("Deleted user document from Firestore:", uid);
+    
+    // 3. Attempt to call the Firebase function to delete from Authentication
     const currentUser = auth.currentUser;
     if (!currentUser) {
-      throw new Error("Not authenticated");
+      return { 
+        success: true, 
+        message: "User document and data deleted. Authentication record may remain as admin is not logged in."
+      };
     }
     
     const idToken = await currentUser.getIdToken();
     const functionUrl = `https://us-central1-food-management-system-e3e10.cloudfunctions.net/deleteUser`;
     
     try {
+      console.log("Calling Firebase function to delete auth user:", uid);
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
         },
         body: JSON.stringify({
-          uid: uid,
-          adminToken: idToken
+          uid: uid
         }),
       });
       
       if (!response.ok) {
-        throw new Error('Failed to delete auth user');
+        console.warn("Response from delete function not OK:", response.status);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to delete auth user");
       }
       
-      return { success: true, message: "User completely deleted" };
+      return { 
+        success: true, 
+        message: "User completely deleted from both Firestore and Authentication"
+      };
     } catch (authError) {
       console.error("Error deleting auth user:", authError);
+      
+      // If we're in development and the Cloud Function is not deployed yet
+      // This allows testing the UI before the Cloud Function is deployed
+      if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+        console.warn("Running in development environment - skipping auth deletion");
+        return { 
+          success: true, 
+          message: "User document deleted. Note: In development mode, authentication record remains."
+        };
+      }
+      
       return { 
         success: false, 
-        message: "User document deleted but auth record remains. Please implement the Firebase function for complete deletion."
+        message: "User document and data deleted, but authentication record remains. Please implement the Firebase Cloud Function for complete deletion."
       };
     }
   } catch (error) {

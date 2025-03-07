@@ -30,6 +30,8 @@ export const Donators = ({ schoolId, foodItems }: DonatorsProps) => {
   const fetchDonators = async () => {
     try {
       setLoading(true);
+      
+      // First fetch all donations for this school
       const donationsQuery = query(
         collection(db, "donations"),
         where("schoolId", "==", schoolId)
@@ -42,27 +44,19 @@ export const Donators = ({ schoolId, foodItems }: DonatorsProps) => {
       })) as Donation[];
       setDonations(donationsData);
       
-      const donatorIds = [...new Set(donationsData.map(donation => donation.userId))];
+      // Now fetch all users with role "donator"
+      const usersQuery = query(
+        collection(db, "users"),
+        where("role", "==", "donator")
+      );
       
-      const donatorPromises = donatorIds.map(async (id) => {
-        try {
-          const userDoc = await getDoc(doc(db, "users", id));
-          if (userDoc.exists()) {
-            return {
-              id: userDoc.id,
-              ...userDoc.data()
-            } as User;
-          }
-          return null;
-        } catch (error) {
-          console.error("Error fetching donator:", error);
-          return null;
-        }
-      });
+      const usersSnapshot = await getDocs(usersQuery);
+      const donatorsData = usersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as User[];
       
-      const donatorResults = await Promise.all(donatorPromises);
-      const filteredDonators = donatorResults.filter(Boolean) as User[];
-      setDonators(filteredDonators);
+      setDonators(donatorsData);
     } catch (error) {
       console.error("Error fetching donators:", error);
       toast({
