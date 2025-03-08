@@ -32,7 +32,7 @@ export const Donators = ({ schoolId, foodItems }: DonatorsProps) => {
     try {
       setLoading(true);
       
-      // Fetch all users with role "donator"
+      // First, fetch all users with role "donator"
       const usersQuery = query(
         collection(db, "users"),
         where("role", "==", "donator")
@@ -47,7 +47,7 @@ export const Donators = ({ schoolId, foodItems }: DonatorsProps) => {
       setDonators(donatorsData);
       console.log(`Fetched ${donatorsData.length} donators`);
       
-      // Fetch all donations for this school
+      // Then fetch all donations for this school
       const donationsQuery = query(
         collection(db, "donations"),
         where("schoolId", "==", schoolId)
@@ -58,6 +58,7 @@ export const Donators = ({ schoolId, foodItems }: DonatorsProps) => {
         id: doc.id,
         ...doc.data()
       })) as Donation[];
+      
       setDonations(donationsData);
       console.log(`Fetched ${donationsData.length} donations`);
       
