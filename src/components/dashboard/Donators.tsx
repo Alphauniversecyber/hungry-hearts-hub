@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { db, deleteUserCompletely } from "@/lib/firebase";
@@ -31,20 +32,7 @@ export const Donators = ({ schoolId, foodItems }: DonatorsProps) => {
     try {
       setLoading(true);
       
-      // First fetch all donations for this school
-      const donationsQuery = query(
-        collection(db, "donations"),
-        where("schoolId", "==", schoolId)
-      );
-      
-      const donationsSnapshot = await getDocs(donationsQuery);
-      const donationsData = donationsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Donation[];
-      setDonations(donationsData);
-      
-      // Now fetch all users with role "donator"
+      // Fetch all users with role "donator"
       const usersQuery = query(
         collection(db, "users"),
         where("role", "==", "donator")
@@ -57,6 +45,22 @@ export const Donators = ({ schoolId, foodItems }: DonatorsProps) => {
       })) as User[];
       
       setDonators(donatorsData);
+      console.log(`Fetched ${donatorsData.length} donators`);
+      
+      // Fetch all donations for this school
+      const donationsQuery = query(
+        collection(db, "donations"),
+        where("schoolId", "==", schoolId)
+      );
+      
+      const donationsSnapshot = await getDocs(donationsQuery);
+      const donationsData = donationsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Donation[];
+      setDonations(donationsData);
+      console.log(`Fetched ${donationsData.length} donations`);
+      
     } catch (error) {
       console.error("Error fetching donators:", error);
       toast({
