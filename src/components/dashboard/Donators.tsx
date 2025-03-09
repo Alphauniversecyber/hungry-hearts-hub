@@ -31,11 +31,12 @@ export const Donators = ({ schoolId, foodItems }: DonatorsProps) => {
   const fetchDonators = async () => {
     try {
       setLoading(true);
+      console.log("Fetching donators for school:", schoolId);
       
-      // First, fetch all users with role "donator"
+      // First, fetch all users with role "donor" (changed from "donator")
       const usersQuery = query(
         collection(db, "users"),
-        where("role", "==", "donator")
+        where("role", "==", "donor")
       );
       
       const usersSnapshot = await getDocs(usersQuery);
@@ -45,7 +46,7 @@ export const Donators = ({ schoolId, foodItems }: DonatorsProps) => {
       })) as User[];
       
       setDonators(donatorsData);
-      console.log(`Fetched ${donatorsData.length} donators`);
+      console.log(`Fetched ${donatorsData.length} donators with role "donor"`);
       
       // Then fetch all donations for this school
       const donationsQuery = query(
@@ -60,7 +61,7 @@ export const Donators = ({ schoolId, foodItems }: DonatorsProps) => {
       })) as Donation[];
       
       setDonations(donationsData);
-      console.log(`Fetched ${donationsData.length} donations`);
+      console.log(`Fetched ${donationsData.length} donations for school ${schoolId}`);
       
     } catch (error) {
       console.error("Error fetching donators:", error);
