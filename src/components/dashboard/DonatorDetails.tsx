@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db, auth, deleteUserCompletely } from "@/lib/firebase";
@@ -30,7 +31,8 @@ import {
   KeyRound, 
   Trash, 
   Shield,
-  Loader
+  Loader,
+  AlertTriangle
 } from "lucide-react";
 import { Donation, FoodItem, User as UserType } from "@/types/school";
 import { sendPasswordResetEmail, getAuth } from "firebase/auth";
@@ -51,6 +53,7 @@ export const DonatorDetails = ({ donator, donations, foodItems, onClose }: Donat
   const [loading, setLoading] = useState(false);
   const [passwordResetLoading, setPasswordResetLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteResult, setDeleteResult] = useState<{success: boolean, message: string} | null>(null);
   const { toast } = useToast();
 
   const handleSave = async () => {
@@ -113,20 +116,33 @@ export const DonatorDetails = ({ donator, donations, foodItems, onClose }: Donat
   const handleDeleteAccount = async () => {
     try {
       setDeleteLoading(true);
+      setDeleteResult(null);
       
       const result = await deleteUserCompletely(donator.id);
+      setDeleteResult(result);
       
       if (result.success) {
         toast({
-          title: "Account deleted",
-          description: result.message || "The donator account has been permanently deleted",
+          title: "Account data deleted",
+          description: result.message || "The donator data has been permanently deleted",
         });
-        onClose();
+        
+        // Only close if complete success or we're in development mode
+        if (result.message.includes("completely deleted") || 
+            result.message.includes("development mode") ||
+            window.location.hostname === "localhost" || 
+            window.location.hostname === "127.0.0.1") {
+          setTimeout(() => onClose(), 3000); // Give user time to read message before closing
+        }
       } else {
         throw new Error(result.message || "Failed to delete user");
       }
     } catch (error: any) {
       console.error("Error deleting account:", error);
+      setDeleteResult({
+        success: false,
+        message: error.message || "Failed to delete the donator account"
+      });
       toast({
         title: "Delete failed",
         description: error.message || "Failed to delete the donator account",
@@ -135,6 +151,10 @@ export const DonatorDetails = ({ donator, donations, foodItems, onClose }: Donat
     } finally {
       setDeleteLoading(false);
     }
+  };
+
+  const handleCloseAfterDelete = () => {
+    onClose();
   };
 
   const downloadDonationHistory = () => {
@@ -170,7 +190,36 @@ export const DonatorDetails = ({ donator, donations, foodItems, onClose }: Donat
   });
 
   if (deleteLoading) {
-    return <Loading message="Deleting account..." />;
+    return <Loading message="Deleting account data..." />;
+  }
+
+  // Show post-deletion screen with result message
+  if (deleteResult) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow space-y-6 flex flex-col items-center justify-center min-h-[300px]">
+        <div className="text-center p-6 max-w-md">
+          <div className="flex justify-center mb-4">
+            {deleteResult.success ? (
+              <Check className="h-16 w-16 text-green-500" />
+            ) : (
+              <AlertTriangle className="h-16 w-16 text-red-500" />
+            )}
+          </div>
+          <h2 className="text-2xl font-bold font-oswald mb-4">
+            {deleteResult.success ? "Account Data Deleted" : "Deletion Issue"}
+          </h2>
+          <p className="text-gray-600 mb-8">
+            {deleteResult.message}
+          </p>
+          <Button 
+            onClick={handleCloseAfterDelete}
+            className="w-full"
+          >
+            Return to Donators List
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (

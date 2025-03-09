@@ -1,4 +1,3 @@
-
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { 
@@ -64,57 +63,56 @@ export const deleteUserCompletely = async (uid) => {
     await deleteDoc(doc(db, "users", uid));
     console.log("Deleted user document from Firestore:", uid);
     
-    // 3. Attempt to call the Firebase function to delete from Authentication
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
+    // 3. Check if we're running in development
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      console.warn("Running in development mode - skipping auth deletion");
       return { 
         success: true, 
-        message: "User document and data deleted. Authentication record may remain as admin is not logged in."
+        message: "User document and data deleted. Note: In development mode, authentication record remains for testing purposes."
       };
     }
     
-    const idToken = await currentUser.getIdToken();
-    const functionUrl = `https://us-central1-food-management-system-e3e10.cloudfunctions.net/deleteUser`;
-    
+    // 4. Attempt to call the Firebase function to delete from Authentication
     try {
-      console.log("Calling Firebase function to delete auth user:", uid);
+      // Get the current user for authentication
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        return { 
+          success: true, 
+          message: "User data deleted. Authentication record may remain as admin is not logged in."
+        };
+      }
+      
+      // Get ID token for authorization
+      const idToken = await currentUser.getIdToken();
+      
+      // Call the Cloud Function (HTTP version, not callable version)
+      const functionUrl = `https://us-central1-food-management-system-e3e10.cloudfunctions.net/deleteUser`;
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${idToken}`
         },
-        body: JSON.stringify({
-          uid: uid
-        }),
+        body: JSON.stringify({ uid }),
       });
       
       if (!response.ok) {
-        console.warn("Response from delete function not OK:", response.status);
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to delete auth user");
+        throw new Error(errorData.error || `Function returned status ${response.status}`);
       }
       
       return { 
         success: true, 
         message: "User completely deleted from both Firestore and Authentication"
       };
-    } catch (authError) {
-      console.error("Error deleting auth user:", authError);
+    } catch (error) {
+      console.error("Error deleting auth user:", error);
       
-      // If we're in development and the Cloud Function is not deployed yet
-      // This allows testing the UI before the Cloud Function is deployed
-      if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-        console.warn("Running in development environment - skipping auth deletion");
-        return { 
-          success: true, 
-          message: "User document deleted. Note: In development mode, authentication record remains."
-        };
-      }
-      
+      // Since Firestore data is already deleted, we'll return a partial success
       return { 
-        success: false, 
-        message: "User document and data deleted, but authentication record remains. Please implement the Firebase Cloud Function for complete deletion."
+        success: true, 
+        message: "User data has been deleted, but the authentication record couldn't be removed. You may need to remove it manually from the Firebase Console."
       };
     }
   } catch (error) {
